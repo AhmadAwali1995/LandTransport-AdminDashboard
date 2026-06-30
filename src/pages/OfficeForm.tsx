@@ -20,11 +20,20 @@ interface OfficeFields {
   trademarkPath: string
 }
 
-interface AdminUserFields {
-  enName: string
-  arName: string
+interface OwnerUserFields {
+  firstNameEn: string
+  midNameEn: string
+  lastNameEn: string
+  firstNameAr: string
+  midNameAr: string
+  lastNameAr: string
   email: string
   phoneNumber: string
+  whatsappPhoneNumber: string
+  nationalId: string
+  nationalityId: string
+  birthDate: string
+  address: string
 }
 
 const emptyOffice: OfficeFields = {
@@ -35,7 +44,12 @@ const emptyOffice: OfficeFields = {
   nationalityId: '', enTrademarkName: '', arTrademarkName: '', trademarkPath: '',
 }
 
-const emptyAdmin: AdminUserFields = { enName: '', arName: '', email: '', phoneNumber: '' }
+const emptyOwner: OwnerUserFields = {
+  firstNameEn: '', midNameEn: '', lastNameEn: '',
+  firstNameAr: '', midNameAr: '', lastNameAr: '',
+  email: '', phoneNumber: '', whatsappPhoneNumber: '',
+  nationalId: '', nationalityId: '', birthDate: '', address: '',
+}
 
 interface CreateResult {
   officeId: number
@@ -51,7 +65,7 @@ export default function OfficeForm() {
   const { showToast } = useToast()
 
   const [office, setOffice] = useState<OfficeFields>(emptyOffice)
-  const [adminUser, setAdminUser] = useState<AdminUserFields>(emptyAdmin)
+  const [ownerUser, setOwnerUser] = useState<OwnerUserFields>(emptyOwner)
   const [loading, setLoading] = useState(isEdit)
   const [submitting, setSubmitting] = useState(false)
   const [loadError, setLoadError] = useState('')
@@ -99,8 +113,8 @@ export default function OfficeForm() {
   const setO = (field: keyof OfficeFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setOffice(prev => ({ ...prev, [field]: e.target.value }))
 
-  const setA = (field: keyof AdminUserFields) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setAdminUser(prev => ({ ...prev, [field]: e.target.value }))
+  const setU = (field: keyof OwnerUserFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setOwnerUser(prev => ({ ...prev, [field]: e.target.value }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -146,10 +160,19 @@ export default function OfficeForm() {
             trademarkPath: office.trademarkPath || null,
           },
           adminUser: {
-            enName: adminUser.enName,
-            arName: adminUser.arName,
-            email: adminUser.email,
-            phoneNumber: adminUser.phoneNumber,
+            firstNameEn: ownerUser.firstNameEn,
+            midNameEn: ownerUser.midNameEn || null,
+            lastNameEn: ownerUser.lastNameEn,
+            firstNameAr: ownerUser.firstNameAr,
+            midNameAr: ownerUser.midNameAr || null,
+            lastNameAr: ownerUser.lastNameAr,
+            email: ownerUser.email,
+            phoneNumber: ownerUser.phoneNumber,
+            whatsappPhoneNumber: ownerUser.whatsappPhoneNumber || null,
+            nationalId: ownerUser.nationalId || null,
+            nationalityId: ownerUser.nationalityId ? Number(ownerUser.nationalityId) : null,
+            birthDate: ownerUser.birthDate || null,
+            address: ownerUser.address || null,
           },
         })
         const data = (res as { data: CreateResult }).data
@@ -200,7 +223,7 @@ export default function OfficeForm() {
         <p className="form-page__subtitle">
           {isEdit
             ? 'Update office information below.'
-            : 'Fill in the details to create a new main office and its admin account.'}
+            : 'Fill in the details to create a new main office and its owner account.'}
         </p>
       </div>
 
@@ -213,11 +236,11 @@ export default function OfficeForm() {
             <span className="success-card__value">#{created.officeId}</span>
           </div>
           <div className="success-card__row">
-            <span className="success-card__label">Admin Email</span>
+            <span className="success-card__label">Owner Email</span>
             <span className="success-card__value">{created.adminEmail}</span>
           </div>
           <div className="success-card__row">
-            <span className="success-card__label">Admin Password</span>
+            <span className="success-card__label">Owner Password</span>
             <span className="success-card__value">{created.adminPassword}</span>
           </div>
           <p style={{ fontSize: 12, color: 'var(--success)', marginTop: 12 }}>
@@ -408,57 +431,161 @@ export default function OfficeForm() {
               />
             </div>
 
-            {/* ── Admin User (create only) ── */}
+            {/* ── Owner User Account (create only) ── */}
             {!isEdit && (
               <>
-                <div className="form-section">Admin User Account</div>
+                <div className="form-section">Owner User Account</div>
 
                 <div className="form-group">
-                  <label className="form-label">Full Name (EN) <span className="form-required">*</span></label>
+                  <label className="form-label">First Name (EN) <span className="form-required">*</span></label>
                   <input
                     className="form-control"
                     type="text"
-                    placeholder="e.g. Ahmad Al-Awali"
-                    value={adminUser.enName}
-                    onChange={setA('enName')}
+                    placeholder="e.g. Ahmad"
+                    value={ownerUser.firstNameEn}
+                    onChange={setU('firstNameEn')}
                     required
                   />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Full Name (AR) <span className="form-required">*</span></label>
+                  <label className="form-label">Middle Name (EN)</label>
+                  <input
+                    className="form-control"
+                    type="text"
+                    placeholder="e.g. Khalid"
+                    value={ownerUser.midNameEn}
+                    onChange={setU('midNameEn')}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Last Name (EN) <span className="form-required">*</span></label>
+                  <input
+                    className="form-control"
+                    type="text"
+                    placeholder="e.g. Al-Awali"
+                    value={ownerUser.lastNameEn}
+                    onChange={setU('lastNameEn')}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">First Name (AR) <span className="form-required">*</span></label>
                   <input
                     className="form-control"
                     type="text"
                     dir="rtl"
-                    placeholder="مثال: أحمد العوالي"
-                    value={adminUser.arName}
-                    onChange={setA('arName')}
+                    placeholder="مثال: أحمد"
+                    value={ownerUser.firstNameAr}
+                    onChange={setU('firstNameAr')}
                     required
                   />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Admin Email <span className="form-required">*</span></label>
+                  <label className="form-label">Middle Name (AR)</label>
+                  <input
+                    className="form-control"
+                    type="text"
+                    dir="rtl"
+                    placeholder="مثال: خالد"
+                    value={ownerUser.midNameAr}
+                    onChange={setU('midNameAr')}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Last Name (AR) <span className="form-required">*</span></label>
+                  <input
+                    className="form-control"
+                    type="text"
+                    dir="rtl"
+                    placeholder="مثال: العوالي"
+                    value={ownerUser.lastNameAr}
+                    onChange={setU('lastNameAr')}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Email <span className="form-required">*</span></label>
                   <input
                     className="form-control"
                     type="email"
-                    placeholder="admin@example.com"
-                    value={adminUser.email}
-                    onChange={setA('email')}
+                    placeholder="owner@example.com"
+                    value={ownerUser.email}
+                    onChange={setU('email')}
                     required
                   />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Admin Phone <span className="form-required">*</span></label>
+                  <label className="form-label">Phone <span className="form-required">*</span></label>
                   <input
                     className="form-control"
                     type="tel"
                     placeholder="+962 7x xxx xxxx"
-                    value={adminUser.phoneNumber}
-                    onChange={setA('phoneNumber')}
+                    value={ownerUser.phoneNumber}
+                    onChange={setU('phoneNumber')}
                     required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">WhatsApp Phone</label>
+                  <input
+                    className="form-control"
+                    type="tel"
+                    placeholder="+962 7x xxx xxxx"
+                    value={ownerUser.whatsappPhoneNumber}
+                    onChange={setU('whatsappPhoneNumber')}
+                  />
+                  <span className="form-hint">Leave blank to use the same phone number</span>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">National ID</label>
+                  <input
+                    className="form-control"
+                    type="text"
+                    placeholder="e.g. 9876543210"
+                    value={ownerUser.nationalId}
+                    onChange={setU('nationalId')}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Nationality ID</label>
+                  <input
+                    className="form-control"
+                    type="number"
+                    min={1}
+                    placeholder="Nationality ID"
+                    value={ownerUser.nationalityId}
+                    onChange={setU('nationalityId')}
+                  />
+                  <span className="form-hint">Leave blank to inherit from office</span>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Birth Date</label>
+                  <input
+                    className="form-control"
+                    type="date"
+                    value={ownerUser.birthDate}
+                    onChange={setU('birthDate')}
+                  />
+                </div>
+
+                <div className="form-group form-group--full">
+                  <label className="form-label">Address</label>
+                  <textarea
+                    className="form-control"
+                    placeholder="Owner's home address"
+                    value={ownerUser.address}
+                    onChange={setU('address')}
                   />
                 </div>
               </>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import ToastContainer from './Toast'
+import { useAuth } from '../context/AuthContext'
 
 const NAV = [
   { to: '/offices', icon: '🏢', label: 'Offices' },
@@ -8,6 +9,13 @@ const NAV = [
 
 export default function Layout() {
   const [open, setOpen] = useState(false)
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <div>
@@ -41,6 +49,7 @@ export default function Layout() {
             type="button"
             className="btn btn--ghost btn--block"
             style={{ color: 'var(--text-on-dark)', justifyContent: 'flex-start', gap: 10 }}
+            onClick={handleLogout}
           >
             <span>🚪</span> Logout
           </button>
@@ -60,7 +69,7 @@ export default function Layout() {
           <span className="navbar__title">Admin Dashboard</span>
         </div>
         <div className="navbar__right">
-          <span className="navbar__user">admin@landtransport.com</span>
+          <span className="navbar__user">{user?.email ?? ''}</span>
         </div>
       </header>
 

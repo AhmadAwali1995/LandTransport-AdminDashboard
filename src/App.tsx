@@ -1,24 +1,53 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from './context/ToastContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
 import Offices from './pages/Offices'
 import OfficeDetails from './pages/OfficeDetails'
 import OfficeForm from './pages/OfficeForm'
 
+function isLoggedIn() {
+  return !!localStorage.getItem('authToken')
+}
+
+function RequireAuth({ children }: { children: JSX.Element }) {
+  const { isLoading } = useAuth()
+  if (isLoading) return null
+  return isLoggedIn() ? children : <Navigate to="/login" replace />
+}
+
+function GuestOnly({ children }: { children: JSX.Element }) {
+  const { isLoading } = useAuth()
+  if (isLoading) return null
+  return !isLoggedIn() ? children : <Navigate to="/dashboard" replace />
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
+      <Route element={<RequireAuth><Layout /></RequireAuth>}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/offices" element={<Offices />} />
+        <Route path="/offices/new" element={<OfficeForm />} />
+        <Route path="/offices/:id" element={<OfficeDetails />} />
+        <Route path="/offices/:id/edit" element={<OfficeForm />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  )
+}
+
 function App() {
   return (
     <ToastProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/offices" element={<Offices />} />
-            <Route path="/offices/new" element={<OfficeForm />} />
-            <Route path="/offices/:id" element={<OfficeDetails />} />
-            <Route path="/offices/:id/edit" element={<OfficeForm />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/offices" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
     </ToastProvider>
   )
 }
