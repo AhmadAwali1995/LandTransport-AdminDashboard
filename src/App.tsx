@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from './context/ToastContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -12,13 +13,13 @@ function isLoggedIn() {
   return !!localStorage.getItem('authToken')
 }
 
-function RequireAuth({ children }: { children: JSX.Element }) {
+function RequireAuth({ children }: { children: ReactNode }) {
   const { isLoading } = useAuth()
   if (isLoading) return null
   return isLoggedIn() ? children : <Navigate to="/login" replace />
 }
 
-function GuestOnly({ children }: { children: JSX.Element }) {
+function GuestOnly({ children }: { children: ReactNode }) {
   const { isLoading } = useAuth()
   if (isLoading) return null
   return !isLoggedIn() ? children : <Navigate to="/dashboard" replace />
