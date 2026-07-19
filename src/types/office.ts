@@ -123,5 +123,5 @@ export interface AdminMainOfficeDto {
   cityId: number
   nationalityId: number
   owner: OfficeOwnerDto | null
-  branches: AdminBranchOfficeDto[]
+  branches?: AdminBranchOfficeDto[]
 }

@@ -8,6 +8,9 @@ import Dashboard from './pages/Dashboard'
 import Offices from './pages/Offices'
 import OfficeDetails from './pages/OfficeDetails'
 import OfficeForm from './pages/OfficeForm'
+import Drivers from './pages/Drivers'
+import DriverDetails from './pages/DriverDetails'
+import Employees from './pages/Employees'
 
 function isLoggedIn() {
   return !!localStorage.getItem('authToken')
@@ -35,6 +38,9 @@ function AppRoutes() {
         <Route path="/offices/new" element={<OfficeForm />} />
         <Route path="/offices/:id" element={<OfficeDetails />} />
         <Route path="/offices/:id/edit" element={<OfficeForm />} />
+        <Route path="/drivers" element={<Drivers />} />
+        <Route path="/drivers/:id" element={<DriverDetails />} />
+        <Route path="/employees" element={<Employees />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
