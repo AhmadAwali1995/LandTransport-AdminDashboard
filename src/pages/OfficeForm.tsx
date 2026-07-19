@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import adminOfficeService from '../services/adminOfficeService'
+import lookupService from '../services/lookupService'
 import { useToast } from '../context/ToastContext'
+import type { CityDto, CountryDto, NationalityDto } from '../types/lookup'
 
 interface OfficeFields {
   enOfficeName: string
   arOfficeName: string
   enOfficeCommercialName: string
   arOfficeCommercialName: string
+  subdomain: string
   officeNationalId: string
   officeEmails: string
   officePhoneNumbers: string
@@ -38,7 +41,7 @@ interface OwnerUserFields {
 
 const emptyOffice: OfficeFields = {
   enOfficeName: '', arOfficeName: '',
-  enOfficeCommercialName: '', arOfficeCommercialName: '',
+  enOfficeCommercialName: '', arOfficeCommercialName: '', subdomain: '',
   officeNationalId: '', officeEmails: '', officePhoneNumbers: '',
   cityId: '', addressDetails: '', coordinates: '',
   nationalityId: '', enTrademarkName: '', arTrademarkName: '', trademarkPath: '',
@@ -71,7 +74,25 @@ export default function OfficeForm() {
   const [loadError, setLoadError] = useState('')
   const [submitError, setSubmitError] = useState('')
   const [created, setCreated] = useState<CreateResult | null>(null)
+  const [resetLink, setResetLink] = useState('')
+  const [resettingPassword, setResettingPassword] = useState(false)
+  const [nationalities, setNationalities] = useState<NationalityDto[]>([])
+  const [countries, setCountries] = useState<CountryDto[]>([])
+  const [cities, setCities] = useState<CityDto[]>([])
+  const [countryId, setCountryId] = useState('')
   const activeRef = useRef(true)
+
+  useEffect(() => {
+    lookupService.getNationalities()
+      .then(res => { if (activeRef.current) setNationalities(res.data ?? []) })
+      .catch(() => {})
+    lookupService.getCountries()
+      .then(res => { if (activeRef.current) setCountries(res.data ?? []) })
+      .catch(() => {})
+    lookupService.getCities()
+      .then(res => { if (activeRef.current) setCities(res.data ?? []) })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!isEdit) return
@@ -86,6 +107,7 @@ export default function OfficeForm() {
           arOfficeName: d.arName,
           enOfficeCommercialName: d.enCROfficeName,
           arOfficeCommercialName: d.arCROfficeName,
+          subdomain: d.subdomain,
           officeNationalId: d.officeNationalId,
           officeEmails: d.officeEmails,
           officePhoneNumbers: d.officePhoneNumbers,
@@ -97,6 +119,23 @@ export default function OfficeForm() {
           arTrademarkName: d.arTrademarkName ?? '',
           trademarkPath: d.trademarkPath ?? '',
         })
+        if (d.owner) {
+          setOwnerUser({
+            firstNameEn: d.owner.firstNameEn,
+            midNameEn: d.owner.midNameEn ?? '',
+            lastNameEn: d.owner.lastNameEn,
+            firstNameAr: d.owner.firstNameAr,
+            midNameAr: d.owner.midNameAr ?? '',
+            lastNameAr: d.owner.lastNameAr,
+            email: d.owner.email,
+            phoneNumber: d.owner.phoneNumber ?? '',
+            whatsappPhoneNumber: d.owner.whatsappPhoneNumber ?? '',
+            nationalId: d.owner.nationalId ?? '',
+            nationalityId: d.owner.nationalityId ? String(d.owner.nationalityId) : '',
+            birthDate: d.owner.birthDate ? d.owner.birthDate.slice(0, 10) : '',
+            address: d.owner.address ?? '',
+          })
+        }
       })
       .catch(err => {
         if (!activeRef.current) return
@@ -110,10 +149,41 @@ export default function OfficeForm() {
     return () => { activeRef.current = false }
   }, [id, isEdit])
 
-  const setO = (field: keyof OfficeFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  useEffect(() => {
+    if (countryId || !office.cityId || cities.length === 0) return
+    const city = cities.find(c => String(c.id) === office.cityId)
+    if (city) setCountryId(String(city.countryId))
+  }, [cities, office.cityId, countryId])
+
+  const citiesForCountry = countryId
+    ? cities.filter(c => String(c.countryId) === countryId)
+    : []
+
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCountryId(e.target.value)
+    setOffice(prev => ({ ...prev, cityId: '' }))
+  }
+
+  const handleResetPassword = async () => {
+    if (!isEdit) return
+    setResettingPassword(true)
+    setResetLink('')
+    try {
+      const res = await adminOfficeService.resetOwnerPassword(Number(id))
+      setResetLink(res.data.resetLink)
+      showToast('Password reset link generated.', 'success')
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string }
+      showToast(e?.response?.data?.message || e?.message || 'Failed to generate reset link.', 'error')
+    } finally {
+      setResettingPassword(false)
+    }
+  }
+
+  const setO = (field: keyof OfficeFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setOffice(prev => ({ ...prev, [field]: e.target.value }))
 
-  const setU = (field: keyof OwnerUserFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  const setU = (field: keyof OwnerUserFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setOwnerUser(prev => ({ ...prev, [field]: e.target.value }))
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -127,6 +197,7 @@ export default function OfficeForm() {
           arOfficeName: office.arOfficeName,
           enOfficeCommercialName: office.enOfficeCommercialName,
           arOfficeCommercialName: office.arOfficeCommercialName,
+          subdomain: office.subdomain,
           officeNationalId: office.officeNationalId,
           officeEmails: office.officeEmails,
           officePhoneNumbers: office.officePhoneNumbers,
@@ -137,6 +208,20 @@ export default function OfficeForm() {
           enTrademarkName: office.enTrademarkName,
           arTrademarkName: office.arTrademarkName,
           trademarkPath: office.trademarkPath || null,
+          owner: {
+            firstNameEn: ownerUser.firstNameEn,
+            midNameEn: ownerUser.midNameEn || null,
+            lastNameEn: ownerUser.lastNameEn,
+            firstNameAr: ownerUser.firstNameAr,
+            midNameAr: ownerUser.midNameAr || null,
+            lastNameAr: ownerUser.lastNameAr,
+            phoneNumber: ownerUser.phoneNumber,
+            whatsappPhoneNumber: ownerUser.whatsappPhoneNumber || null,
+            nationalId: ownerUser.nationalId || null,
+            nationalityId: ownerUser.nationalityId ? Number(ownerUser.nationalityId) : null,
+            birthDate: ownerUser.birthDate || null,
+            address: ownerUser.address || null,
+          },
         })
         showToast('Office updated successfully.', 'success')
         navigate('/offices')
@@ -147,6 +232,7 @@ export default function OfficeForm() {
             arOfficeName: office.arOfficeName,
             enOfficeCommercialName: office.enOfficeCommercialName,
             arOfficeCommercialName: office.arOfficeCommercialName,
+            subdomain: office.subdomain,
             officeNationalId: office.officeNationalId,
             officeEmails: office.officeEmails,
             officePhoneNumbers: office.officePhoneNumbers,
@@ -218,19 +304,19 @@ export default function OfficeForm() {
           ← Back to Offices
         </button>
         <h1 className="form-page__title">
-          {isEdit ? 'Edit Office' : 'New Main Office'}
+          {isEdit ? 'Edit Office' : 'Create Office'}
         </h1>
         <p className="form-page__subtitle">
           {isEdit
-            ? 'Update office information below.'
-            : 'Fill in the details to create a new main office and its owner account.'}
+            ? 'Update office and owner information below.'
+            : 'Fill in the details to create a new office and its owner account.'}
         </p>
       </div>
 
       {/* Created credentials card */}
       {created && (
         <div className="success-card">
-          <p className="success-card__title">✓ Main Office Created</p>
+          <p className="success-card__title">✓ Office Created</p>
           <div className="success-card__row">
             <span className="success-card__label">Office ID</span>
             <span className="success-card__value">#{created.officeId}</span>
@@ -245,6 +331,17 @@ export default function OfficeForm() {
           </div>
           <p style={{ fontSize: 12, color: 'var(--success)', marginTop: 12 }}>
             Save the password — it will not be shown again.
+          </p>
+        </div>
+      )}
+
+      {/* Password reset link card */}
+      {resetLink && (
+        <div className="success-card">
+          <p className="success-card__title">✓ Password Reset Link Generated</p>
+          <p style={{ wordBreak: 'break-all', fontFamily: 'monospace', fontSize: 13, color: 'var(--text)' }}>{resetLink}</p>
+          <p style={{ fontSize: 12, color: 'var(--success)', marginTop: 12 }}>
+            No email service is configured yet — share this link with the owner manually.
           </p>
         </div>
       )}
@@ -308,6 +405,20 @@ export default function OfficeForm() {
             </div>
 
             <div className="form-group">
+              <label className="form-label">Subdomain <span className="form-required">*</span></label>
+              <input
+                className="form-control"
+                type="text"
+                placeholder="e.g. al-aqaba-transport"
+                value={office.subdomain}
+                onChange={setO('subdomain')}
+                pattern="^[a-z0-9]+(-[a-z0-9]+)*$"
+                required
+              />
+              <span className="form-hint">Lowercase letters, numbers and hyphens only</span>
+            </div>
+
+            <div className="form-group">
               <label className="form-label">National ID <span className="form-required">*</span></label>
               <input
                 className="form-control"
@@ -344,29 +455,49 @@ export default function OfficeForm() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">City ID <span className="form-required">*</span></label>
-              <input
+              <label className="form-label">Country <span className="form-required">*</span></label>
+              <select
                 className="form-control"
-                type="number"
-                min={1}
-                placeholder="City ID"
-                value={office.cityId}
-                onChange={setO('cityId')}
+                value={countryId}
+                onChange={handleCountryChange}
                 required
-              />
+              >
+                <option value="">Select country</option>
+                {countries.map(c => (
+                  <option key={c.id} value={c.id}>{c.enName}</option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Nationality ID <span className="form-required">*</span></label>
-              <input
+              <label className="form-label">City <span className="form-required">*</span></label>
+              <select
                 className="form-control"
-                type="number"
-                min={1}
-                placeholder="Nationality ID"
+                value={office.cityId}
+                onChange={setO('cityId')}
+                disabled={!countryId}
+                required
+              >
+                <option value="">{countryId ? 'Select city' : 'Select a country first'}</option>
+                {citiesForCountry.map(c => (
+                  <option key={c.id} value={c.id}>{c.enName}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Nationality <span className="form-required">*</span></label>
+              <select
+                className="form-control"
                 value={office.nationalityId}
                 onChange={setO('nationalityId')}
                 required
-              />
+              >
+                <option value="">Select nationality</option>
+                {nationalities.map(n => (
+                  <option key={n.id} value={n.id}>{n.nationalityEnName}</option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group">
@@ -431,10 +562,22 @@ export default function OfficeForm() {
               />
             </div>
 
-            {/* ── Owner User Account (create only) ── */}
-            {!isEdit && (
-              <>
-                <div className="form-section">Owner User Account</div>
+            {/* ── Owner User Account ── */}
+            <div className="form-section">
+              Owner User Account
+              {isEdit && (
+                <button
+                  type="button"
+                  className="btn btn--outline-primary btn--sm"
+                  style={{ float: 'right', textTransform: 'none', letterSpacing: 0, fontWeight: 500 }}
+                  onClick={handleResetPassword}
+                  disabled={resettingPassword}
+                >
+                  {resettingPassword && <span className="btn__spinner" />}
+                  Reset Password
+                </button>
+              )}
+            </div>
 
                 <div className="form-group">
                   <label className="form-label">First Name (EN) <span className="form-required">*</span></label>
@@ -517,8 +660,10 @@ export default function OfficeForm() {
                     placeholder="owner@example.com"
                     value={ownerUser.email}
                     onChange={setU('email')}
+                    disabled={isEdit}
                     required
                   />
+                  {isEdit && <span className="form-hint">Email cannot be changed</span>}
                 </div>
 
                 <div className="form-group">
@@ -557,15 +702,17 @@ export default function OfficeForm() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Nationality ID</label>
-                  <input
+                  <label className="form-label">Nationality</label>
+                  <select
                     className="form-control"
-                    type="number"
-                    min={1}
-                    placeholder="Nationality ID"
                     value={ownerUser.nationalityId}
                     onChange={setU('nationalityId')}
-                  />
+                  >
+                    <option value="">Select office</option>
+                    {nationalities.map(n => (
+                      <option key={n.id} value={n.id}>{n.nationalityEnName}</option>
+                    ))}
+                  </select>
                   <span className="form-hint">Leave blank to inherit from office</span>
                 </div>
 
@@ -588,8 +735,6 @@ export default function OfficeForm() {
                     onChange={setU('address')}
                   />
                 </div>
-              </>
-            )}
           </div>
 
           <div className="form-page__actions">

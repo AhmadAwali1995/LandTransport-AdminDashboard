@@ -5,10 +5,28 @@ export interface OfficeOwnerDto {
   phone: string | null
 }
 
+export interface AdminOfficeOwnerDetailsDto {
+  id: string
+  firstNameEn: string
+  midNameEn: string | null
+  lastNameEn: string
+  firstNameAr: string
+  midNameAr: string | null
+  lastNameAr: string
+  email: string
+  phoneNumber: string | null
+  whatsappPhoneNumber: string | null
+  nationalId: string | null
+  nationalityId: number | null
+  birthDate: string | null
+  address: string | null
+}
+
 export interface AdminOfficeDetailsDto {
   id: number
   enName: string
   arName: string
+  subdomain: string
   enCROfficeName: string
   arCROfficeName: string
   officeNationalId: string
@@ -21,28 +39,18 @@ export interface AdminOfficeDetailsDto {
   enTrademarkName: string | null
   arTrademarkName: string | null
   trademarkPath: string | null
-  parentOfficeId: number | null
+  owner: AdminOfficeOwnerDetailsDto | null
 }
 
-export interface AdminBranchOfficeDto {
-  id: number
-  enName: string
-  arName: string
-  officeEmails: string
-  officePhoneNumbers: string
-  addressDetails: string
-  coordinates: string | null
-  trademarkPath: string | null
-  cityId: number
-  nationalityId: number
-  parentOfficeId: number
-  owner: OfficeOwnerDto | null
+export interface ResetOwnerPasswordResponse {
+  resetLink: string
 }
 
 export interface AdminOfficeInfoSectionDto {
   id: number
   enName: string
   arName: string
+  subdomain: string
   enCROfficeName: string
   arCROfficeName: string
   officeNationalId: string
@@ -55,17 +63,6 @@ export interface AdminOfficeInfoSectionDto {
   enTrademarkName: string | null
   arTrademarkName: string | null
   trademarkPath: string | null
-  parentOfficeId: number | null
-  owner: OfficeOwnerDto | null
-}
-
-export interface AdminBranchSummaryDto {
-  id: number
-  enName: string
-  arName: string
-  officeEmails: string
-  officePhoneNumbers: string
-  addressDetails: string
   owner: OfficeOwnerDto | null
 }
 
@@ -105,7 +102,6 @@ export interface AdminDriverDto {
 
 export interface AdminOfficeDetailsFullDto {
   info: AdminOfficeInfoSectionDto
-  branches: AdminBranchSummaryDto[]
   employees: AdminEmployeeDto[]
   vehicles: AdminVehicleDto[]
   drivers: AdminDriverDto[]
@@ -123,5 +119,4 @@ export interface AdminMainOfficeDto {
   cityId: number
   nationalityId: number
   owner: OfficeOwnerDto | null
-  branches?: AdminBranchOfficeDto[]
 }

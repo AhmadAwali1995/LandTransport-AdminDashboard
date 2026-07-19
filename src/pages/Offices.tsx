@@ -51,12 +51,12 @@ export default function Offices() {
           <h1 className="page__title">Offices</h1>
           {!loading && !error && (
             <p className="page__count">
-              {offices.length} main office{offices.length !== 1 ? 's' : ''}
+              {offices.length} office{offices.length !== 1 ? 's' : ''}
             </p>
           )}
         </div>
         <button type="button" className="btn btn--primary" onClick={() => navigate('/offices/new')}>
-          + New Main Office
+          + Create Office
         </button>
       </div>
 
@@ -143,13 +143,13 @@ export default function Offices() {
               <div className="state">
                 <span className="state__icon">🏢</span>
                 <p className="state__title">No offices yet</p>
-                <p className="state__desc">Create your first main office to get started.</p>
+                <p className="state__desc">Create your first office to get started.</p>
                 <button
                   type="button"
                   className="btn btn--primary btn--sm"
                   onClick={() => navigate('/offices/new')}
                 >
-                  + Create Main Office
+                  + Create Office
                 </button>
               </div>
             )}
