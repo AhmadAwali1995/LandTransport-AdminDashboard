@@ -7,6 +7,10 @@ const NAV = [
   { to: '/offices', icon: '🏢', label: 'Offices' },
   { to: '/drivers', icon: '🧑‍✈️', label: 'Drivers' },
   { to: '/employees', icon: '👥', label: 'Employees' },
+  { to: '/lookups', icon: '📋', label: 'Lookups' },
+  { to: '/cities', icon: '🏙️', label: 'Cities' },
+  { to: '/vehicle-models', icon: '🚗', label: 'Vehicle Models' },
+  { to: '/pickup-points', icon: '📍', label: 'Pickup Points' },
 ]
 
 export default function Layout() {

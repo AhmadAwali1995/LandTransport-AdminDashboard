@@ -11,6 +11,10 @@ import OfficeForm from './pages/OfficeForm'
 import Drivers from './pages/Drivers'
 import DriverDetails from './pages/DriverDetails'
 import Employees from './pages/Employees'
+import Lookups from './pages/Lookups'
+import Cities from './pages/Cities'
+import VehicleModels from './pages/VehicleModels'
+import PickupPoints from './pages/PickupPoints'
 
 function isLoggedIn() {
   return !!localStorage.getItem('authToken')
@@ -41,6 +45,11 @@ function AppRoutes() {
         <Route path="/drivers" element={<Drivers />} />
         <Route path="/drivers/:id" element={<DriverDetails />} />
         <Route path="/employees" element={<Employees />} />
+        <Route path="/lookups/:key" element={<Lookups />} />
+        <Route path="/lookups" element={<Lookups />} />
+        <Route path="/cities" element={<Cities />} />
+        <Route path="/vehicle-models" element={<VehicleModels />} />
+        <Route path="/pickup-points" element={<PickupPoints />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
