@@ -19,6 +19,10 @@ function parseLocation(raw: string): { lat: string; lng: string } {
   }
 }
 
+function googleMapsUrl(lat: string, lng: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lat)},${encodeURIComponent(lng)}`
+}
+
 function CitySkeletonRow() {
   return (
     <tr>
@@ -423,7 +427,7 @@ export default function Locations() {
                         <th>ID</th>
                         <th>English Name</th>
                         <th>Arabic Name</th>
-                        <th>Coordinates</th>
+                        <th>Location</th>
                         <th className="table__actions">Actions</th>
                       </tr>
                     </thead>
@@ -436,19 +440,26 @@ export default function Locations() {
                             <td className="cell-name-main">{p.enName}</td>
                             <td>{p.arName}</td>
                             <td>
-                              <span
+                              <a
+                                href={googleMapsUrl(lat, lng)}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 style={{
-                                  fontVariantNumeric: 'tabular-nums',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 6,
                                   fontSize: 12,
-                                  padding: '4px 8px',
+                                  padding: '4px 10px',
                                   borderRadius: 6,
-                                  background: 'var(--bg)',
+                                  background: 'var(--primary-light)',
                                   border: '1px solid var(--border)',
-                                  color: 'var(--text-secondary)',
+                                  color: 'var(--primary)',
+                                  textDecoration: 'none',
+                                  fontWeight: 500,
                                 }}
                               >
-                                {lat}, {lng}
-                              </span>
+                                📍 View on Map
+                              </a>
                             </td>
                             <td className="table__actions">
                               <div className="btn-group">
