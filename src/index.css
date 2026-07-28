@@ -366,6 +366,7 @@ textarea.form-control { min-height: 80px; resize: vertical; }
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  padding: 16px;
 }
 
 .table-scroll { width: 100%; overflow-x: auto; }
@@ -406,8 +407,13 @@ textarea.form-control { min-height: 80px; resize: vertical; }
   vertical-align: middle;
 }
 
-.table__actions { text-align: right; white-space: nowrap; }
+.table th.table__actions, .table td.table__actions { text-align: right; white-space: nowrap; }
 .table__id { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+.table--centered th,
+.table--centered td { text-align: center; }
+.table--centered th.table__actions,
+.table--centered td.table__actions { text-align: center; }
 
 .table__branch-row { background: #F8FAFF !important; }
 .table__branch-row:hover { background: var(--primary-light) !important; }

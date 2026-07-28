@@ -8,9 +8,8 @@ const NAV = [
   { to: '/drivers', icon: '🧑‍✈️', label: 'Drivers' },
   { to: '/employees', icon: '👥', label: 'Employees' },
   { to: '/lookups', icon: '📋', label: 'Lookups' },
-  { to: '/cities', icon: '🏙️', label: 'Cities' },
+  { to: '/locations', icon: '🏙️', label: 'Locations' },
   { to: '/vehicle-models', icon: '🚗', label: 'Vehicle Models' },
-  { to: '/pickup-points', icon: '📍', label: 'Pickup Points' },
 ]
 
 export default function Layout() {

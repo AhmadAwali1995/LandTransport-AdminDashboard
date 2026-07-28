@@ -3,7 +3,7 @@ import lookupService from '../services/lookupService'
 import LookupCrud, { type LookupField } from '../components/LookupCrud'
 import type {
   ColorDto, AmenityDto, SpecialityDto, LicenseTypeDto, VehicleTypeDto,
-  VehicleProducerDto, CurrencyDto, CountryDto, NationalityDto,
+  VehicleProducerDto, CurrencyDto, NationalityDto,
 } from '../types/lookup'
 
 // Every entity here is a flat name-only lookup (no foreign keys), so they all
@@ -16,7 +16,6 @@ const TABS = [
   { key: 'vehicle-types', label: 'Vehicle Types' },
   { key: 'vehicle-producers', label: 'Vehicle Producers' },
   { key: 'currencies', label: 'Currencies' },
-  { key: 'countries', label: 'Countries' },
   { key: 'nationalities', label: 'Nationalities' },
 ]
 
@@ -132,20 +131,6 @@ function renderTab(key: string) {
             { key: 'symbolEn', label: 'English Symbol', maxLength: 20 },
           ] as LookupField<CurrencyDto>[]}
           emptyItem={{ code: '', nameAr: '', nameEn: '', symbolAr: '', symbolEn: '' }}
-        />
-      )
-    case 'countries':
-      return (
-        <LookupCrud<CountryDto>
-          title="Country"
-          api={lookupService.countries}
-          fields={[
-            { key: 'arName', label: 'Arabic Name', required: true, maxLength: 300 },
-            { key: 'enName', label: 'English Name', required: true, maxLength: 300 },
-            { key: 'countryCode', label: 'Country Code', maxLength: 10 },
-            { key: 'isoCode', label: 'ISO Code', maxLength: 3 },
-          ] as LookupField<CountryDto>[]}
-          emptyItem={{ arName: '', enName: '', countryCode: '', isoCode: '' }}
         />
       )
     case 'nationalities':

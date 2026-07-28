@@ -1,0 +1,610 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import lookupService from '../services/lookupService'
+import { useToast } from '../context/ToastContext'
+import ConfirmModal from '../components/ConfirmModal'
+import SearchableSelect from '../components/SearchableSelect'
+import type { CountryDto, CityDto, PickupPointDto } from '../types/lookup'
+
+function errorMessage(err: unknown): string {
+  const e = err as { response?: { data?: { message?: string } }; message?: string }
+  return e?.response?.data?.message || e?.message || 'Network error — make sure the API is running.'
+}
+
+function parseLocation(raw: string): { lat: string; lng: string } {
+  try {
+    const parsed = JSON.parse(raw)
+    return { lat: String(parsed.lat ?? ''), lng: String(parsed.lng ?? '') }
+  } catch {
+    return { lat: '', lng: '' }
+  }
+}
+
+function CitySkeletonRow() {
+  return (
+    <tr>
+      {[36, 160, 160, 180].map((w, i) => (
+        <td key={i} style={{ padding: '14px 16px' }}>
+          <div className="skeleton" style={{ height: 14, width: w }} />
+        </td>
+      ))}
+    </tr>
+  )
+}
+
+export default function Locations() {
+  const { showToast } = useToast()
+  const activeRef = useRef(true)
+
+  const [countries, setCountries] = useState<CountryDto[]>([])
+  const [selectedCountryId, setSelectedCountryId] = useState<number | null>(null)
+  const [cities, setCities] = useState<CityDto[]>([])
+  const [citiesLoading, setCitiesLoading] = useState(false)
+
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  // Country modal
+  const [countryModalOpen, setCountryModalOpen] = useState(false)
+  const [countryForm, setCountryForm] = useState({ arName: '', enName: '', countryCode: '', isoCode: '' })
+  const [editingCountryId, setEditingCountryId] = useState<number | null>(null)
+
+  // City modal
+  const [cityModalOpen, setCityModalOpen] = useState(false)
+  const [cityForm, setCityForm] = useState({ arName: '', enName: '' })
+  const [editingCityId, setEditingCityId] = useState<number | null>(null)
+
+  // Pickup points modal (shows the stations table for one city)
+  const [stationsCity, setStationsCity] = useState<CityDto | null>(null)
+  const [points, setPoints] = useState<PickupPointDto[]>([])
+  const [pointsLoading, setPointsLoading] = useState(false)
+
+  // Pickup point form modal (nested inside the stations modal)
+  const [pointModalOpen, setPointModalOpen] = useState(false)
+  const [pointForm, setPointForm] = useState({ arName: '', enName: '', lat: '', lng: '' })
+  const [editingPointId, setEditingPointId] = useState<number | null>(null)
+
+  const [saving, setSaving] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ kind: 'country' | 'city' | 'point'; id: number } | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  const selectedCountry = countries.find(c => c.id === selectedCountryId) ?? null
+
+  const fetchCountries = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await lookupService.countries.getAll()
+      if (!activeRef.current) return
+      setCountries(res.data ?? [])
+    } catch (err) {
+      if (!activeRef.current) return
+      setError(errorMessage(err))
+    } finally {
+      if (activeRef.current) setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    activeRef.current = true
+    fetchCountries()
+    return () => { activeRef.current = false }
+  }, [fetchCountries])
+
+  const fetchCities = useCallback(async (countryId: number) => {
+    setCitiesLoading(true)
+    try {
+      const res = await lookupService.cities.getByCountryId(countryId)
+      if (!activeRef.current) return
+      setCities(res.data ?? [])
+    } catch (err) {
+      showToast(errorMessage(err), 'error')
+    } finally {
+      if (activeRef.current) setCitiesLoading(false)
+    }
+  }, [showToast])
+
+  const fetchPoints = useCallback(async (cityId: number) => {
+    setPointsLoading(true)
+    try {
+      const res = await lookupService.pickupPoints.getByCityId(cityId)
+      if (!activeRef.current) return
+      setPoints(res.data ?? [])
+    } catch (err) {
+      showToast(errorMessage(err), 'error')
+    } finally {
+      if (activeRef.current) setPointsLoading(false)
+    }
+  }, [showToast])
+
+  const selectCountryByName = (name: string) => {
+    const country = countries.find(c => c.enName === name)
+    if (!country) {
+      setSelectedCountryId(null)
+      setCities([])
+      return
+    }
+    setSelectedCountryId(country.id)
+    setCities([])
+    fetchCities(country.id)
+  }
+
+  const toggleStations = (city: CityDto) => {
+    if (stationsCity?.id === city.id) {
+      setStationsCity(null)
+      setPoints([])
+      return
+    }
+    setStationsCity(city)
+    fetchPoints(city.id)
+  }
+  const closeStations = () => {
+    setStationsCity(null)
+    setPoints([])
+  }
+
+  // --- Country CRUD ---
+  const openAddCountry = () => {
+    setCountryForm({ arName: '', enName: '', countryCode: '', isoCode: '' })
+    setEditingCountryId(null)
+    setCountryModalOpen(true)
+  }
+  const openEditCountry = (c: CountryDto) => {
+    setCountryForm({ arName: c.arName, enName: c.enName, countryCode: c.countryCode, isoCode: c.isoCode })
+    setEditingCountryId(c.id)
+    setCountryModalOpen(true)
+  }
+  const submitCountry = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      if (editingCountryId != null) {
+        await lookupService.countries.update({ ...countryForm, id: editingCountryId })
+        showToast('Country updated.', 'success')
+      } else {
+        await lookupService.countries.create(countryForm)
+        showToast('Country created.', 'success')
+      }
+      setCountryModalOpen(false)
+      fetchCountries()
+    } catch (err) {
+      showToast(errorMessage(err), 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // --- City CRUD ---
+  const openAddCity = () => {
+    setCityForm({ arName: '', enName: '' })
+    setEditingCityId(null)
+    setCityModalOpen(true)
+  }
+  const openEditCity = (c: CityDto) => {
+    setCityForm({ arName: c.arName, enName: c.enName })
+    setEditingCityId(c.id)
+    setCityModalOpen(true)
+  }
+  const submitCity = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (selectedCountryId == null) return
+    setSaving(true)
+    try {
+      const payload = { ...cityForm, countryId: selectedCountryId }
+      if (editingCityId != null) {
+        await lookupService.cities.update({ ...payload, id: editingCityId })
+        showToast('City updated.', 'success')
+      } else {
+        await lookupService.cities.create(payload)
+        showToast('City created.', 'success')
+      }
+      setCityModalOpen(false)
+      fetchCities(selectedCountryId)
+    } catch (err) {
+      showToast(errorMessage(err), 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // --- Pickup point CRUD ---
+  const openAddPoint = () => {
+    setPointForm({ arName: '', enName: '', lat: '', lng: '' })
+    setEditingPointId(null)
+    setPointModalOpen(true)
+  }
+  const openEditPoint = (p: PickupPointDto) => {
+    const { lat, lng } = parseLocation(p.location)
+    setPointForm({ arName: p.arName, enName: p.enName, lat, lng })
+    setEditingPointId(p.id)
+    setPointModalOpen(true)
+  }
+  const submitPoint = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (stationsCity == null) return
+    setSaving(true)
+    try {
+      const payload = {
+        arName: pointForm.arName,
+        enName: pointForm.enName,
+        cityId: stationsCity.id,
+        location: JSON.stringify({ lat: Number(pointForm.lat), lng: Number(pointForm.lng) }),
+      }
+      if (editingPointId != null) {
+        await lookupService.pickupPoints.update({ ...payload, id: editingPointId })
+        showToast('Pickup point updated.', 'success')
+      } else {
+        await lookupService.pickupPoints.create(payload)
+        showToast('Pickup point created.', 'success')
+      }
+      setPointModalOpen(false)
+      fetchPoints(stationsCity.id)
+    } catch (err) {
+      showToast(errorMessage(err), 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // --- Delete ---
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      if (deleteTarget.kind === 'country') {
+        await lookupService.countries.remove(deleteTarget.id)
+        showToast('Country deleted.', 'success')
+        if (selectedCountryId === deleteTarget.id) {
+          setSelectedCountryId(null)
+          setCities([])
+        }
+        fetchCountries()
+      } else if (deleteTarget.kind === 'city') {
+        await lookupService.cities.remove(deleteTarget.id)
+        showToast('City deleted.', 'success')
+        if (stationsCity?.id === deleteTarget.id) closeStations()
+        if (selectedCountryId != null) fetchCities(selectedCountryId)
+      } else {
+        await lookupService.pickupPoints.remove(deleteTarget.id)
+        showToast('Pickup point deleted.', 'success')
+        if (stationsCity != null) fetchPoints(stationsCity.id)
+      }
+      setDeleteTarget(null)
+    } catch (err) {
+      showToast(errorMessage(err), 'error')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const deleteDescriptions: Record<string, string> = {
+    country: 'Deleting this country will also affect its cities and pickup points.',
+    city: 'Deleting this city will also affect its pickup points.',
+    point: 'Are you sure you want to delete this pickup point?',
+  }
+
+  return (
+    <div>
+      <div className="page__header">
+        <div className="page__heading">
+          <h1 className="page__title">Locations</h1>
+          <p className="page__count">Search for a country to see its cities, then show stations for a city.</p>
+        </div>
+      </div>
+
+      {error ? (
+        <div className="state">
+          <span className="state__icon">⚠️</span>
+          <p className="state__title">Failed to load countries</p>
+          <p className="state__desc">{error}</p>
+          <button type="button" className="btn btn--outline-primary btn--sm" onClick={fetchCountries}>Try again</button>
+        </div>
+      ) : (
+        <>
+          <div className="table-wrap" style={{ marginBottom: 20, overflow: 'visible', padding: 20 }}>
+            <div className="page__header" style={{ marginBottom: 12 }}>
+              <h2 className="page__title" style={{ fontSize: 16 }}>🌍 Country</h2>
+              <button type="button" className="btn btn--primary btn--sm" onClick={openAddCountry}>+ Add Country</button>
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <SearchableSelect
+                options={countries.map(c => c.enName)}
+                value={selectedCountry?.enName ?? ''}
+                onChange={selectCountryByName}
+                placeholder={loading ? 'Loading…' : 'Search countries…'}
+                allLabel="Select a country"
+                style={{ flex: '0 0 320px' }}
+              />
+              {selectedCountry && (
+                <div className="btn-group">
+                  <button type="button" className="btn btn--outline-primary btn--sm" onClick={() => openEditCountry(selectedCountry)}>Edit</button>
+                  <button type="button" className="btn btn--danger btn--sm" onClick={() => setDeleteTarget({ kind: 'country', id: selectedCountry.id })}>Delete</button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {selectedCountryId != null && (
+            <div className="table-wrap">
+              <div className="page__header" style={{ marginBottom: 12 }}>
+                <h2 className="page__title" style={{ fontSize: 16 }}>🏙️ Cities in {selectedCountry?.enName}</h2>
+                <button type="button" className="btn btn--primary btn--sm" onClick={openAddCity}>+ Add City</button>
+              </div>
+
+              <div className="table-scroll">
+                <table className="table table--centered">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>English Name</th>
+                      <th>Arabic Name</th>
+                      <th className="table__actions">Actions</th>
+                    </tr>
+                  </thead>
+                  {citiesLoading ? (
+                    <tbody>
+                      {[1, 2, 3].map(i => <CitySkeletonRow key={i} />)}
+                    </tbody>
+                  ) : (
+                    <tbody>
+                      {cities.map(city => {
+                        const active = stationsCity?.id === city.id
+                        return (
+                          <tr key={city.id} style={active ? { background: 'var(--primary-light)' } : undefined}>
+                            <td className="table__id">#{city.id}</td>
+                            <td className="cell-name-main">{city.enName}</td>
+                            <td>{city.arName}</td>
+                            <td className="table__actions">
+                              <div className="btn-group">
+                                <button
+                                  type="button"
+                                  className={`btn btn--sm ${active ? 'btn--primary' : 'btn--outline-primary'}`}
+                                  onClick={() => toggleStations(city)}
+                                >
+                                  📍 {active ? 'Hide Stations' : 'Show Stations'}
+                                </button>
+                                <button type="button" className="btn btn--outline-primary btn--sm" onClick={() => openEditCity(city)}>Edit</button>
+                                <button type="button" className="btn btn--danger btn--sm" onClick={() => setDeleteTarget({ kind: 'city', id: city.id })}>Delete</button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  )}
+                </table>
+              </div>
+
+              {!citiesLoading && cities.length === 0 && (
+                <div className="state">
+                  <span className="state__icon">🏙️</span>
+                  <p className="state__title">No cities yet</p>
+                  <p className="state__desc">Add the first city for this country.</p>
+                  <button type="button" className="btn btn--primary btn--sm" onClick={openAddCity}>+ Add City</button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {stationsCity && (
+            <div className="table-wrap" style={{ marginTop: 20, borderTop: '3px solid var(--primary)' }}>
+              <div className="page__header" style={{ marginBottom: 12 }}>
+                <div className="page__heading">
+                  <h2 className="page__title" style={{ fontSize: 16 }}>📍 Stations in {stationsCity.enName}</h2>
+                  <p className="page__count">
+                    {pointsLoading ? 'Loading…' : `${points.length} pickup point${points.length !== 1 ? 's' : ''}`}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button type="button" className="btn btn--primary btn--sm" onClick={openAddPoint}>+ Add Pickup Point</button>
+                  <button type="button" className="btn btn--ghost btn--sm" onClick={closeStations}>✕ Close</button>
+                </div>
+              </div>
+
+              {pointsLoading ? (
+                <div className="table-scroll">
+                  <table className="table">
+                    <tbody>
+                      {[1, 2, 3].map(i => <CitySkeletonRow key={i} />)}
+                    </tbody>
+                  </table>
+                </div>
+              ) : points.length === 0 ? (
+                <div className="state">
+                  <span className="state__icon">📍</span>
+                  <p className="state__title">No pickup points yet</p>
+                  <p className="state__desc">Add the first pickup point for {stationsCity.enName}.</p>
+                  <button type="button" className="btn btn--primary btn--sm" onClick={openAddPoint}>+ Add Pickup Point</button>
+                </div>
+              ) : (
+                <div className="table-scroll">
+                  <table className="table table--centered">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>English Name</th>
+                        <th>Arabic Name</th>
+                        <th>Coordinates</th>
+                        <th className="table__actions">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {points.map(p => {
+                        const { lat, lng } = parseLocation(p.location)
+                        return (
+                          <tr key={p.id}>
+                            <td className="table__id">#{p.id}</td>
+                            <td className="cell-name-main">{p.enName}</td>
+                            <td>{p.arName}</td>
+                            <td>
+                              <span
+                                style={{
+                                  fontVariantNumeric: 'tabular-nums',
+                                  fontSize: 12,
+                                  padding: '4px 8px',
+                                  borderRadius: 6,
+                                  background: 'var(--bg)',
+                                  border: '1px solid var(--border)',
+                                  color: 'var(--text-secondary)',
+                                }}
+                              >
+                                {lat}, {lng}
+                              </span>
+                            </td>
+                            <td className="table__actions">
+                              <div className="btn-group">
+                                <button type="button" className="btn btn--outline-primary btn--sm" onClick={() => openEditPoint(p)}>Edit</button>
+                                <button type="button" className="btn btn--danger btn--sm" onClick={() => setDeleteTarget({ kind: 'point', id: p.id })}>Delete</button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {countryModalOpen && (
+        <div className="modal-overlay" onClick={() => !saving && setCountryModalOpen(false)}>
+          <div className="modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <h2 className="modal__title">{editingCountryId != null ? 'Edit Country' : 'Add Country'}</h2>
+              <button type="button" className="modal__close" onClick={() => setCountryModalOpen(false)}>×</button>
+            </div>
+            <form onSubmit={submitCountry}>
+              <div className="modal__body">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">English Name <span className="form-required">*</span></label>
+                    <input className="form-control" maxLength={300} value={countryForm.enName}
+                      onChange={e => setCountryForm(f => ({ ...f, enName: e.target.value }))} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Arabic Name <span className="form-required">*</span></label>
+                    <input className="form-control" dir="rtl" maxLength={300} value={countryForm.arName}
+                      onChange={e => setCountryForm(f => ({ ...f, arName: e.target.value }))} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Country Code</label>
+                    <input className="form-control" maxLength={10} placeholder="e.g. +962" value={countryForm.countryCode}
+                      onChange={e => setCountryForm(f => ({ ...f, countryCode: e.target.value }))} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">ISO Code</label>
+                    <input className="form-control" maxLength={3} placeholder="e.g. JO" value={countryForm.isoCode}
+                      onChange={e => setCountryForm(f => ({ ...f, isoCode: e.target.value.toUpperCase() }))} />
+                  </div>
+                </div>
+              </div>
+              <div className="modal__footer">
+                <button type="button" className="btn btn--ghost" onClick={() => setCountryModalOpen(false)} disabled={saving}>Cancel</button>
+                <button type="submit" className="btn btn--primary" disabled={saving}>
+                  {saving && <span className="btn__spinner" />}Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {cityModalOpen && (
+        <div className="modal-overlay" onClick={() => !saving && setCityModalOpen(false)}>
+          <div className="modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <h2 className="modal__title">{editingCityId != null ? 'Edit City' : 'Add City'}</h2>
+              <button type="button" className="modal__close" onClick={() => setCityModalOpen(false)}>×</button>
+            </div>
+            <form onSubmit={submitCity}>
+              <div className="modal__body">
+                {selectedCountry && (
+                  <p className="form-hint" style={{ marginTop: -4, marginBottom: 16 }}>
+                    In <strong>{selectedCountry.enName}</strong>
+                  </p>
+                )}
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">English Name <span className="form-required">*</span></label>
+                    <input className="form-control" maxLength={300} value={cityForm.enName}
+                      onChange={e => setCityForm(f => ({ ...f, enName: e.target.value }))} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Arabic Name <span className="form-required">*</span></label>
+                    <input className="form-control" dir="rtl" maxLength={300} value={cityForm.arName}
+                      onChange={e => setCityForm(f => ({ ...f, arName: e.target.value }))} required />
+                  </div>
+                </div>
+              </div>
+              <div className="modal__footer">
+                <button type="button" className="btn btn--ghost" onClick={() => setCityModalOpen(false)} disabled={saving}>Cancel</button>
+                <button type="submit" className="btn btn--primary" disabled={saving}>
+                  {saving && <span className="btn__spinner" />}Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {pointModalOpen && (
+        <div className="modal-overlay" onClick={() => !saving && setPointModalOpen(false)}>
+          <div className="modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <h2 className="modal__title">{editingPointId != null ? 'Edit Pickup Point' : 'Add Pickup Point'}</h2>
+              <button type="button" className="modal__close" onClick={() => setPointModalOpen(false)}>×</button>
+            </div>
+            <form onSubmit={submitPoint}>
+              <div className="modal__body">
+                {stationsCity && (
+                  <p className="form-hint" style={{ marginTop: -4, marginBottom: 16 }}>
+                    In <strong>{stationsCity.enName}</strong>
+                  </p>
+                )}
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">English Name <span className="form-required">*</span></label>
+                    <input className="form-control" maxLength={300} value={pointForm.enName}
+                      onChange={e => setPointForm(f => ({ ...f, enName: e.target.value }))} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Arabic Name <span className="form-required">*</span></label>
+                    <input className="form-control" dir="rtl" maxLength={300} value={pointForm.arName}
+                      onChange={e => setPointForm(f => ({ ...f, arName: e.target.value }))} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Latitude <span className="form-required">*</span></label>
+                    <input className="form-control" type="number" step="any" placeholder="e.g. 31.977081" value={pointForm.lat}
+                      onChange={e => setPointForm(f => ({ ...f, lat: e.target.value }))} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Longitude <span className="form-required">*</span></label>
+                    <input className="form-control" type="number" step="any" placeholder="e.g. 35.8542877" value={pointForm.lng}
+                      onChange={e => setPointForm(f => ({ ...f, lng: e.target.value }))} required />
+                  </div>
+                </div>
+              </div>
+              <div className="modal__footer">
+                <button type="button" className="btn btn--ghost" onClick={() => setPointModalOpen(false)} disabled={saving}>Cancel</button>
+                <button type="submit" className="btn btn--primary" disabled={saving}>
+                  {saving && <span className="btn__spinner" />}Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal
+        isOpen={deleteTarget != null}
+        title="Delete"
+        description={deleteTarget ? deleteDescriptions[deleteTarget.kind] : ''}
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+    </div>
+  )
+}

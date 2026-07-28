@@ -32,9 +32,17 @@ const vehicleProducers = crud<VehicleProducerDto>('/LookVehicleProducers')
 const currencies = crud<CurrencyDto>('/LookCurrencies')
 const countries = crud<CountryDto>('/LookCountries')
 const nationalities = crud<NationalityDto>('/LookNationalities')
-const cities = crud<CityDto>('/LookCities')
+const cities = {
+  ...crud<CityDto>('/LookCities'),
+  getByCountryId: (countryId: number): Promise<ApiResponse<CityDto[]>> =>
+    apiClient.get('/LookCities/GetByCountryId', { params: { countryId } }),
+}
 const vehicleModels = crud<VehicleModelDto>('/LookVehicleModels')
-const pickupPoints = crud<PickupPointDto>('/LookPickupPoints')
+const pickupPoints = {
+  ...crud<PickupPointDto>('/LookPickupPoints'),
+  getByCityId: (cityId: number): Promise<ApiResponse<PickupPointDto[]>> =>
+    apiClient.get('/LookPickupPoints/GetByCityId', { params: { cityId } }),
+}
 
 const lookupService = {
   getNationalities: nationalities.getAll,
