@@ -74,7 +74,7 @@ export interface VehicleModelDto {
   vehicleProducerId: number
 }
 
-export interface PickupPointDto {
+export interface StationDto {
   id: number
   arName: string
   enName: string

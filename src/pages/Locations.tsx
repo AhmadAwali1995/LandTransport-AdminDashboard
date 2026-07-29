@@ -3,7 +3,7 @@ import lookupService from '../services/lookupService'
 import { useToast } from '../context/ToastContext'
 import ConfirmModal from '../components/ConfirmModal'
 import SearchableSelect from '../components/SearchableSelect'
-import type { CountryDto, CityDto, PickupPointDto } from '../types/lookup'
+import type { CountryDto, CityDto, StationDto } from '../types/lookup'
 
 function errorMessage(err: unknown): string {
   const e = err as { response?: { data?: { message?: string } }; message?: string }
@@ -91,7 +91,7 @@ export default function Locations() {
 
   // Pickup points modal (shows the stations table for one city)
   const [stationsCity, setStationsCity] = useState<CityDto | null>(null)
-  const [points, setPoints] = useState<PickupPointDto[]>([])
+  const [points, setPoints] = useState<StationDto[]>([])
   const [pointsLoading, setPointsLoading] = useState(false)
 
   // Pickup point form modal (nested inside the stations modal)
@@ -143,7 +143,7 @@ export default function Locations() {
   const fetchPoints = useCallback(async (cityId: number) => {
     setPointsLoading(true)
     try {
-      const res = await lookupService.pickupPoints.getByCityId(cityId)
+      const res = await lookupService.stations.getByCityId(cityId)
       if (!activeRef.current) return
       setPoints(res.data ?? [])
     } catch (err) {
@@ -250,7 +250,7 @@ export default function Locations() {
     setEditingPointId(null)
     setPointModalOpen(true)
   }
-  const openEditPoint = (p: PickupPointDto) => {
+  const openEditPoint = (p: StationDto) => {
     const { lat, lng } = parseLocation(p.location)
     setPointForm({ arName: p.arName, enName: p.enName, mapsLink: lat && lng ? googleMapsUrl(lat, lng) : '' })
     setPointFormError('')
@@ -279,10 +279,10 @@ export default function Locations() {
         location: JSON.stringify({ lat: Number(coords.lat), lng: Number(coords.lng) }),
       }
       if (editingPointId != null) {
-        await lookupService.pickupPoints.update({ ...payload, id: editingPointId })
+        await lookupService.stations.update({ ...payload, id: editingPointId })
         showToast('Pickup point updated.', 'success')
       } else {
-        await lookupService.pickupPoints.create(payload)
+        await lookupService.stations.create(payload)
         showToast('Pickup point created.', 'success')
       }
       setPointModalOpen(false)
@@ -313,7 +313,7 @@ export default function Locations() {
         if (stationsCity?.id === deleteTarget.id) closeStations()
         if (selectedCountryId != null) fetchCities(selectedCountryId)
       } else {
-        await lookupService.pickupPoints.remove(deleteTarget.id)
+        await lookupService.stations.remove(deleteTarget.id)
         showToast('Pickup point deleted.', 'success')
         if (stationsCity != null) fetchPoints(stationsCity.id)
       }

@@ -1,7 +1,7 @@
 import apiClient from './api'
 import type {
   CityDto, CountryDto, NationalityDto, ColorDto, AmenityDto, SpecialityDto,
-  LicenseTypeDto, VehicleTypeDto, VehicleProducerDto, CurrencyDto, VehicleModelDto, PickupPointDto,
+  LicenseTypeDto, VehicleTypeDto, VehicleProducerDto, CurrencyDto, VehicleModelDto, StationDto,
 } from '../types/lookup'
 
 interface ApiResponse<T> {
@@ -38,10 +38,10 @@ const cities = {
     apiClient.get('/LookCities/GetByCountryId', { params: { countryId } }),
 }
 const vehicleModels = crud<VehicleModelDto>('/LookVehicleModels')
-const pickupPoints = {
-  ...crud<PickupPointDto>('/LookPickupPoints'),
-  getByCityId: (cityId: number): Promise<ApiResponse<PickupPointDto[]>> =>
-    apiClient.get('/LookPickupPoints/GetByCityId', { params: { cityId } }),
+const stations = {
+  ...crud<StationDto>('/LookStations'),
+  getByCityId: (cityId: number): Promise<ApiResponse<StationDto[]>> =>
+    apiClient.get('/LookStations/GetByCityId', { params: { cityId } }),
 }
 
 const lookupService = {
@@ -60,7 +60,7 @@ const lookupService = {
   nationalities,
   cities,
   vehicleModels,
-  pickupPoints,
+  stations,
 }
 
 export default lookupService
