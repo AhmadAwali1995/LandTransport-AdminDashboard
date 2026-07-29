@@ -5,6 +5,11 @@ import { useAuth } from '../context/AuthContext'
 
 const NAV = [
   { to: '/offices', icon: '🏢', label: 'Offices' },
+  { to: '/drivers', icon: '🧑‍✈️', label: 'Drivers' },
+  { to: '/employees', icon: '👥', label: 'Employees' },
+  { to: '/lookups', icon: '📋', label: 'Lookups' },
+  { to: '/locations', icon: '🏙️', label: 'Locations' },
+  { to: '/vehicle-models', icon: '🚗', label: 'Vehicle Models' },
 ]
 
 export default function Layout() {

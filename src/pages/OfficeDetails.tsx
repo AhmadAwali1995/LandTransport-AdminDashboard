@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import adminOfficeService from '../services/adminOfficeService'
 import type { AdminOfficeDetailsFullDto } from '../types/office'
 
-type Tab = 'info' | 'branches' | 'employees' | 'vehicles' | 'drivers'
+type Tab = 'info' | 'employees' | 'vehicles' | 'drivers'
 
 function dash(v: string | number | null | undefined) {
   return v !== null && v !== undefined && v !== ''
@@ -67,12 +67,8 @@ function InfoTab({ info }: { info: AdminOfficeDetailsFullDto['info'] }) {
           <p className="detail-value" style={{ fontFamily: 'monospace' }}>{dash(info.officeNationalId)}</p>
         </div>
         <div>
-          <p className="detail-label">Type</p>
-          <p className="detail-value">
-            <span className={`badge ${info.parentOfficeId ? 'badge--neutral' : 'badge--success'}`}>
-              {info.parentOfficeId ? 'Branch' : 'Main Office'}
-            </span>
-          </p>
+          <p className="detail-label">Subdomain</p>
+          <p className="detail-value" style={{ fontFamily: 'monospace' }}>{dash(info.subdomain)}</p>
         </div>
 
         <div>
@@ -129,61 +125,6 @@ function InfoTab({ info }: { info: AdminOfficeDetailsFullDto['info'] }) {
           </div>
         )}
       </div>
-    </div>
-  )
-}
-
-// ── Branches tab ─────────────────────────────────────────────────────────────
-function BranchesTab({ branches, onView }: { branches: AdminOfficeDetailsFullDto['branches']; onView: (id: number) => void }) {
-  if (branches.length === 0) {
-    return (
-      <div className="state">
-        <span className="state__icon">🏢</span>
-        <p className="state__title">No branches</p>
-        <p className="state__desc">This office has no branch offices.</p>
-      </div>
-    )
-  }
-  return (
-    <div className="table-scroll">
-      <table className="table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Owner</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th className="table__actions">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {branches.map(b => (
-            <tr key={b.id}>
-              <td className="table__id">#{b.id}</td>
-              <td>
-                <div className="cell-name-main">{b.enName}</div>
-                <div className="cell-name-sub">{b.arName}</div>
-              </td>
-              <td>
-                {b.owner ? (
-                  <>
-                    <div className="cell-name-main">{b.owner.enName || b.owner.arName}</div>
-                    <div className="cell-name-sub">{b.owner.email}</div>
-                  </>
-                ) : <span className="cell-empty">—</span>}
-              </td>
-              <td>{dash(b.officeEmails)}</td>
-              <td>{dash(b.officePhoneNumbers)}</td>
-              <td className="table__actions">
-                <button type="button" className="btn btn--ghost btn--sm" onClick={() => onView(b.id)}>
-                  View
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   )
 }
@@ -382,11 +323,10 @@ export default function OfficeDetails() {
     )
   }
 
-  const { info, branches, employees, vehicles, drivers } = data
+  const { info, employees, vehicles, drivers } = data
 
   const TABS: { key: Tab; label: string; icon: string; count?: number }[] = [
     { key: 'info',      label: 'Info',      icon: '📋' },
-    { key: 'branches',  label: 'Branches',  icon: '🏢', count: branches.length },
     { key: 'employees', label: 'Employees', icon: '👥', count: employees.length },
     { key: 'vehicles',  label: 'Vehicles',  icon: '🚌', count: vehicles.length },
     { key: 'drivers',   label: 'Drivers',   icon: '🧑‍✈️', count: drivers.length },
@@ -402,9 +342,7 @@ export default function OfficeDetails() {
         <div className="detail-page__bar">
           <div>
             <h1 className="detail-page__title">{info.enName}</h1>
-            <p className="detail-page__subtitle">
-              #{info.id} · {info.parentOfficeId ? 'Branch Office' : 'Main Office'}
-            </p>
+            <p className="detail-page__subtitle">#{info.id}</p>
           </div>
           <div className="btn-group">
             <button
@@ -439,7 +377,6 @@ export default function OfficeDetails() {
       {/* Tab content */}
       <div className="detail-page__card">
         {tab === 'info'      && <InfoTab info={info} />}
-        {tab === 'branches'  && <BranchesTab branches={branches} onView={bid => navigate(`/offices/${bid}`)} />}
         {tab === 'employees' && <EmployeesTab employees={employees} />}
         {tab === 'vehicles'  && <VehiclesTab vehicles={vehicles} />}
         {tab === 'drivers'   && <DriversTab drivers={drivers} />}

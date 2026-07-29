@@ -1,5 +1,5 @@
 import apiClient from './api'
-import type { AdminMainOfficeDto, AdminOfficeDetailsDto, AdminOfficeDetailsFullDto } from '../types/office'
+import type { AdminMainOfficeDto, AdminOfficeDetailsDto, AdminOfficeDetailsFullDto, ResetOwnerPasswordResponse } from '../types/office'
 
 interface ApiResponse<T> {
   success: boolean
@@ -24,6 +24,9 @@ const adminOfficeService = {
 
   getOfficeDetails: (id: number): Promise<ApiResponse<AdminOfficeDetailsFullDto>> =>
     apiClient.get(`/api/admin/AdminOffices/officeDetails/${id}`),
+
+  resetOwnerPassword: (id: number): Promise<ApiResponse<ResetOwnerPasswordResponse>> =>
+    apiClient.post(`/api/admin/AdminOffices/resetOwnerPassword/${id}`),
 }
 
 export default adminOfficeService
