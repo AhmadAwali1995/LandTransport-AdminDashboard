@@ -23,6 +23,38 @@ function googleMapsUrl(lat: string, lng: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lat)},${encodeURIComponent(lng)}`
 }
 
+// Ordered by precision: a place's exact pin (!3d/!4d) beats the map's
+// viewport center (@lat,lng), which Google includes in "place" URLs too.
+const COORD_PATTERNS = [
+  /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+  /[?&]q=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+  /[?&]query=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+  /[?&]ll=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+  /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+  /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/,
+]
+
+const SHORT_LINK_HOSTS = ['maps.app.goo.gl', 'goo.gl']
+
+function isShortMapsLink(input: string): boolean {
+  try {
+    const url = new URL(input.trim())
+    return SHORT_LINK_HOSTS.includes(url.hostname)
+  } catch {
+    return false
+  }
+}
+
+function parseGoogleMapsLink(input: string): { lat: string; lng: string } | null {
+  const value = input.trim()
+  if (!value || isShortMapsLink(value)) return null
+  for (const pattern of COORD_PATTERNS) {
+    const match = value.match(pattern)
+    if (match) return { lat: match[1], lng: match[2] }
+  }
+  return null
+}
+
 function CitySkeletonRow() {
   return (
     <tr>
@@ -64,7 +96,8 @@ export default function Locations() {
 
   // Pickup point form modal (nested inside the stations modal)
   const [pointModalOpen, setPointModalOpen] = useState(false)
-  const [pointForm, setPointForm] = useState({ arName: '', enName: '', lat: '', lng: '' })
+  const [pointForm, setPointForm] = useState({ arName: '', enName: '', mapsLink: '' })
+  const [pointFormError, setPointFormError] = useState('')
   const [editingPointId, setEditingPointId] = useState<number | null>(null)
 
   const [saving, setSaving] = useState(false)
@@ -212,26 +245,38 @@ export default function Locations() {
 
   // --- Pickup point CRUD ---
   const openAddPoint = () => {
-    setPointForm({ arName: '', enName: '', lat: '', lng: '' })
+    setPointForm({ arName: '', enName: '', mapsLink: '' })
+    setPointFormError('')
     setEditingPointId(null)
     setPointModalOpen(true)
   }
   const openEditPoint = (p: PickupPointDto) => {
     const { lat, lng } = parseLocation(p.location)
-    setPointForm({ arName: p.arName, enName: p.enName, lat, lng })
+    setPointForm({ arName: p.arName, enName: p.enName, mapsLink: lat && lng ? googleMapsUrl(lat, lng) : '' })
+    setPointFormError('')
     setEditingPointId(p.id)
     setPointModalOpen(true)
   }
   const submitPoint = async (e: React.FormEvent) => {
     e.preventDefault()
     if (stationsCity == null) return
+    const coords = parseGoogleMapsLink(pointForm.mapsLink)
+    if (!coords) {
+      setPointFormError(
+        isShortMapsLink(pointForm.mapsLink)
+          ? 'Shortened links (maps.app.goo.gl) can\'t be read directly — open it in a browser, then copy the full expanded URL from the address bar.'
+          : 'Paste a valid Google Maps link (or "lat,lng") that includes coordinates.'
+      )
+      return
+    }
+    setPointFormError('')
     setSaving(true)
     try {
       const payload = {
         arName: pointForm.arName,
         enName: pointForm.enName,
         cityId: stationsCity.id,
-        location: JSON.stringify({ lat: Number(pointForm.lat), lng: Number(pointForm.lng) }),
+        location: JSON.stringify({ lat: Number(coords.lat), lng: Number(coords.lng) }),
       }
       if (editingPointId != null) {
         await lookupService.pickupPoints.update({ ...payload, id: editingPointId })
@@ -585,15 +630,35 @@ export default function Locations() {
                     <input className="form-control" dir="rtl" maxLength={300} value={pointForm.arName}
                       onChange={e => setPointForm(f => ({ ...f, arName: e.target.value }))} required />
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Latitude <span className="form-required">*</span></label>
-                    <input className="form-control" type="number" step="any" placeholder="e.g. 31.977081" value={pointForm.lat}
-                      onChange={e => setPointForm(f => ({ ...f, lat: e.target.value }))} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Longitude <span className="form-required">*</span></label>
-                    <input className="form-control" type="number" step="any" placeholder="e.g. 35.8542877" value={pointForm.lng}
-                      onChange={e => setPointForm(f => ({ ...f, lng: e.target.value }))} required />
+                  <div className="form-group form-group--full">
+                    <label className="form-label">Google Maps Link <span className="form-required">*</span></label>
+                    <input
+                      className={`form-control${pointFormError ? ' form-control--error' : ''}`}
+                      type="text"
+                      placeholder="Paste a Google Maps link, e.g. https://maps.google.com/?q=31.977081,35.8542877"
+                      value={pointForm.mapsLink}
+                      onChange={e => { setPointForm(f => ({ ...f, mapsLink: e.target.value })); setPointFormError('') }}
+                      required
+                    />
+                    {pointFormError ? (
+                      <span className="form-error-text">{pointFormError}</span>
+                    ) : (
+                      (() => {
+                        if (isShortMapsLink(pointForm.mapsLink)) {
+                          return (
+                            <span className="form-error-text">
+                              Shortened links can't be read directly — open it in a browser and paste the full expanded URL instead.
+                            </span>
+                          )
+                        }
+                        const coords = parseGoogleMapsLink(pointForm.mapsLink)
+                        return coords ? (
+                          <span className="form-hint">Detected coordinates: {coords.lat}, {coords.lng}</span>
+                        ) : (
+                          <span className="form-hint">Open the location in Google Maps, then copy the page link here.</span>
+                        )
+                      })()
+                    )}
                   </div>
                 </div>
               </div>
