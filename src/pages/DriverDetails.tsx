@@ -11,7 +11,7 @@ function dash(v: string | number | null | undefined) {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-}
+} 
 
 function SectionSkeleton() {
   return (
