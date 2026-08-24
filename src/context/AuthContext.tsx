@@ -35,7 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const res = await adminAuthService.login({ email, password })
     localStorage.setItem('authToken', res.data.accessToken)
-    setState(s => ({ ...s, isLoading: false }))
+    const me = await adminAuthService.me()
+    setState({ user: me.data, isLoading: false })
   }
 
   const logout = async () => {

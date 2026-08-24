@@ -1,0 +1,56 @@
+@use 'variables' as *;
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  color: $text-primary;
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 22px;
+}
+
+h3 {
+  font-size: 18px;
+}
+
+h4 {
+  font-size: 16px;
+}
+
+p {
+  color: $text-secondary;
+}
+
+.text-secondary {
+  color: $text-secondary;
+}
+
+.text-muted {
+  color: $text-muted;
+}
+
+.text-primary-color {
+  color: $primary;
+}
+
+small,
+.text-sm {
+  font-size: 12px;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}

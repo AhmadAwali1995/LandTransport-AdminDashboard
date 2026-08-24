@@ -1,0 +1,117 @@
+@use 'variables' as *;
+
+// ── Flexbox helpers ──────────────────────────────────────
+@mixin flex($justify: flex-start, $align: stretch, $direction: row, $gap: 0) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $justify;
+  align-items: $align;
+  @if $gap != 0 {
+    gap: $gap;
+  }
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// ── Responsive breakpoints ───────────────────────────────
+@mixin mobile {
+  @media (max-width: #{$bp-mobile - 1px}) {
+    @content;
+  }
+}
+
+@mixin tablet-up {
+  @media (min-width: $bp-mobile) {
+    @content;
+  }
+}
+
+@mixin desktop-up {
+  @media (min-width: $bp-tablet) {
+    @content;
+  }
+}
+
+// ── Button base ──────────────────────────────────────────
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  font-family: $font;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: $radius-md;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color $transition, border-color $transition,
+    color $transition, box-shadow $transition, transform $transition;
+  user-select: none;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+  }
+}
+
+@mixin button-variant($bg, $bg-hover, $color: #fff) {
+  background-color: $bg;
+  border-color: $bg;
+  color: $color;
+
+  &:hover:not(:disabled) {
+    background-color: $bg-hover;
+    border-color: $bg-hover;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+}
+
+@mixin button-outline($color, $bg-hover) {
+  background-color: transparent;
+  border-color: currentColor;
+  color: $color;
+
+  &:hover:not(:disabled) {
+    background-color: $bg-hover;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+}
+
+// ── Card surface ─────────────────────────────────────────
+@mixin card {
+  background-color: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+}
+
+// ── Truncate text ────────────────────────────────────────
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,274 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.detail-page {
+  max-width: $content-max;
+  margin-inline: auto;
+
+  &--wide {
+    max-width: $content-wide-max;
+  }
+
+  &__top {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+    margin-bottom: $space-6;
+
+    .back-link {
+      align-self: flex-start;
+    }
+  }
+
+  &__bar {
+    @include flex-between;
+    flex-wrap: wrap;
+    gap: $space-3;
+  }
+
+  &__heading {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    min-width: 0;
+  }
+
+  &__title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $space-3;
+  }
+
+  &__chips {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $space-2;
+  }
+
+  &__title {
+    font-size: 24px;
+    font-weight: 700;
+    color: $text-primary;
+    line-height: 1.25;
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: $text-secondary;
+  }
+
+  &__card {
+    @include card;
+    padding: $space-8;
+
+    @include mobile {
+      padding: $space-5;
+    }
+
+    > .form-section:not(:first-child) {
+      margin-top: $space-8;
+    }
+  }
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $space-5 $space-8;
+
+  .detail-page--wide & {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $space-4;
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+
+  &__label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: $text-secondary;
+  }
+
+  &__value {
+    font-size: 15px;
+    color: $text-primary;
+    word-break: break-word;
+    white-space: pre-wrap; // preserve line breaks / bullet points in notes
+  }
+
+  &__image {
+    display: block;
+    max-width: 220px;
+    max-height: 220px;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid $border;
+    object-fit: cover;
+  }
+}
+
+// Optional full-width row inside a detail grid.
+.detail-grid__item--full {
+  grid-column: 1 / -1;
+}
+
+.detail-page__section {
+  margin-top: $space-8;
+  padding-top: $space-6;
+  border-top: 1px solid $border;
+
+  &-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: $text-primary;
+    margin-bottom: $space-4;
+  }
+
+  &-header {
+    @include flex-between;
+    flex-wrap: wrap;
+    gap: $space-3;
+    margin-bottom: $space-4;
+
+    .detail-page__section-title {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.trip-overview {
+  @include card;
+  padding: $space-6 $space-8;
+  margin-bottom: $space-6;
+  text-align: center;
+
+  @include mobile {
+    padding: $space-5;
+  }
+
+  &__route {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: $space-4;
+  }
+
+  &__route-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: $space-3 $space-4;
+  }
+
+  &__place {
+    font-size: 26px;
+    font-weight: 700;
+    color: $text-primary;
+    line-height: 1.25;
+  }
+
+  &__arrow {
+    font-size: 24px;
+    font-weight: 700;
+    color: $text-secondary;
+    flex-shrink: 0;
+  }
+}
+
+.trip-stops {
+  list-style: none;
+  margin: 0;
+  padding: $space-3 0 $space-2;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: $space-4 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+
+  &__item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-2;
+    flex: 0 0 auto;
+    width: 150px;
+    text-align: center;
+
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      inset-block-start: 17px;
+      inset-inline-start: calc(50% + 18px);
+      width: calc(100% - 36px);
+      height: 2px;
+      background: $border;
+    }
+  }
+
+  &__marker {
+    position: relative;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: $primary-light;
+    color: $primary;
+    font-size: 15px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    z-index: 1;
+    box-shadow: 0 0 0 4px $surface;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  &__name {
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-primary;
+    word-break: break-word;
+    line-height: 1.35;
+  }
+
+  &__duration {
+    font-size: 12px;
+    font-weight: 500;
+    color: $text-secondary;
+  }
+
+  &__empty {
+    margin: 0;
+  }
+}

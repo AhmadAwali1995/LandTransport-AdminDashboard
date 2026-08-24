@@ -1,0 +1,22 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid $border;
+  border-top-color: $primary;
+  border-radius: 50%;
+  animation: spinner-rotate 0.7s linear infinite;
+}
+
+.spinner-center {
+  @include flex-center;
+  padding: 64px 24px;
+}
+
+@keyframes spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}

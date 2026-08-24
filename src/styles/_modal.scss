@@ -1,0 +1,451 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  @include flex-center;
+  padding: $space-4;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  animation: modal-fade-in 150ms ease;
+}
+
+.modal {
+  width: 100%;
+  max-width: 400px;
+  background-color: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-lg;
+  animation: modal-pop-in 180ms ease;
+  overflow: hidden;
+
+  &--wide {
+    max-width: 560px;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+
+    .modal__body {
+      overflow-y: auto;
+    }
+  }
+
+  &--xl {
+    max-width: 800px;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+
+    .modal__body {
+      overflow-y: auto;
+    }
+  }
+
+  &__header {
+    @include flex-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid $border;
+  }
+
+  &__title {
+    font-size: 17px;
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  &__close {
+    @include flex-center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    border-radius: $radius-sm;
+    font-size: 20px;
+    line-height: 1;
+    color: $text-secondary;
+    cursor: pointer;
+    transition: background-color $transition, color $transition;
+
+    &:hover {
+      background-color: $background;
+      color: $text-primary;
+    }
+  }
+
+  &__body {
+    padding: 24px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: $text-secondary;
+  }
+
+  &__footer {
+    @include flex(flex-end, center, row, $space-3);
+    padding: 16px 24px;
+    border-top: 1px solid $border;
+    background-color: $background;
+  }
+}
+
+.refund-receipt {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+
+  &__section-title {
+    margin: 0 0 $space-2;
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-primary;
+    letter-spacing: 0.02em;
+  }
+
+  &__trip {
+    padding-top: $space-3;
+    border-top: 1px solid $border;
+  }
+
+  &__meta,
+  &__totals {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+    margin: 0;
+  }
+
+  &__row {
+    @include flex-between;
+    gap: $space-3;
+    margin: 0;
+    font-size: 13px;
+
+    dt {
+      color: $text-secondary;
+      font-weight: 500;
+    }
+
+    dd {
+      margin: 0;
+      color: $text-primary;
+      font-weight: 600;
+      text-align: end;
+    }
+
+    &--grand {
+      padding-top: $space-2;
+      border-top: 1px solid $border;
+      font-size: 14px;
+
+      dt,
+      dd {
+        color: $danger;
+      }
+    }
+  }
+
+  &__table-wrap {
+    overflow-x: auto;
+    border: 1px solid $border;
+    border-radius: $radius-sm;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    th,
+    td {
+      padding: 8px 10px;
+      text-align: start;
+      border-bottom: 1px solid $border;
+    }
+
+    th {
+      background-color: $background;
+      color: $text-secondary;
+      font-weight: 600;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    td:not(:first-child),
+    th:not(:first-child) {
+      text-align: end;
+      white-space: nowrap;
+    }
+  }
+
+  &__note {
+    margin: 0;
+    padding: $space-3;
+    background-color: $danger-light;
+    color: $danger-dark;
+    border-radius: $radius-sm;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+.ticket-details {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+
+  .detail-grid {
+    gap: $space-4 $space-6;
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__section-title {
+    margin: $space-2 0 0;
+    padding-top: $space-3;
+    border-top: 1px solid $border;
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-primary;
+    letter-spacing: 0.02em;
+  }
+
+  &__section-title:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  &__note {
+    margin: 0;
+    font-size: 14px;
+    color: $text-primary;
+    white-space: pre-wrap;
+  }
+
+  &__status {
+    margin: 0;
+    font-size: 14px;
+    color: $text-secondary;
+
+    &--error {
+      color: $danger;
+    }
+  }
+
+  &__table-wrap {
+    overflow-x: auto;
+  }
+}
+
+.trip-lifecycle {
+  &__scheduled,
+  &__difference {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: $space-3;
+    margin: 0 0 $space-4;
+    font-size: 13px;
+  }
+
+  &__scheduled-label,
+  &__difference-label {
+    color: $text-secondary;
+    font-weight: 600;
+  }
+
+  &__scheduled-value,
+  &__difference-value {
+    color: $text-primary;
+    font-weight: 600;
+    text-align: end;
+  }
+}
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.star-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+
+  &__stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    line-height: 1;
+  }
+
+  &__star {
+    position: relative;
+    display: inline-block;
+    font-size: 15px;
+    line-height: 1;
+    color: #94A3B8;
+  }
+
+  &__star-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--fill, 0%);
+    overflow: hidden;
+    color: #D97706;
+  }
+
+  &__value {
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: $text-primary;
+  }
+
+  &--lg &__star {
+    font-size: 22px;
+  }
+
+  &--lg &__value {
+    font-size: 20px;
+  }
+}
+
+.trip-rating-modal {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+
+  &__summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-2;
+    text-align: center;
+  }
+
+  &__count {
+    margin: 0;
+    font-size: 14px;
+    color: $text-secondary;
+  }
+
+  &__split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $space-4;
+    margin: 0;
+
+    @include mobile {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__split-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: $space-3;
+    border: 1px solid $border;
+    border-radius: $radius-md;
+    background-color: $background;
+
+    dt {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: $text-secondary;
+    }
+
+    dd {
+      margin: 0;
+    }
+  }
+
+  &__status {
+    margin: 0;
+    font-size: 14px;
+    color: $text-secondary;
+    text-align: center;
+  }
+
+  &__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: $space-3;
+    border: 1px solid $border;
+    border-radius: $radius-md;
+    background-color: $background;
+  }
+
+  &__who {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    color: $text-primary;
+  }
+
+  &__phone,
+  &__when {
+    font-size: 12px;
+    color: $text-secondary;
+  }
+
+  &__score {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &__score-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: $text-secondary;
+  }
+
+  &__comment {
+    margin: 0;
+    font-size: 14px;
+    color: $text-primary;
+    white-space: pre-wrap;
+  }
+}

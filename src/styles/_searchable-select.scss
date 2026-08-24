@@ -1,0 +1,144 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.ss {
+  position: relative;
+  width: 100%;
+
+  &__control {
+    display: flex;
+    align-items: center;
+    background-color: $surface;
+    border: 1px solid $border;
+    border-radius: $radius-md;
+    transition: border-color $transition, box-shadow $transition;
+    cursor: text;
+  }
+
+  &--open &__control {
+    border-color: $primary;
+    box-shadow: 0 0 0 3px $primary-light;
+  }
+
+  &__input {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 11px;
+    font-family: $font;
+    font-size: 14px;
+    color: $text-primary;
+    background: transparent;
+    border: 0;
+    border-radius: $radius-md;
+
+    &:focus {
+      outline: none;
+    }
+
+    &::placeholder {
+      color: $text-muted;
+    }
+  }
+
+  &__clear {
+    color: $text-muted;
+    flex-shrink: 0;
+    padding: 0 $space-1;
+    font-size: 18px;
+    line-height: 1;
+    background: none;
+    border: 0;
+    cursor: pointer;
+
+    &:hover {
+      color: $danger;
+    }
+  }
+
+  &__arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-inline-end: 12px;
+    color: $text-muted;
+    pointer-events: none;
+    transition: color $transition, margin-inline-end $transition;
+
+    svg {
+      display: block;
+      width: 18px;
+      height: 18px;
+      transform-origin: center;
+      transition: transform $transition;
+    }
+  }
+
+  &--open &__arrow {
+    color: $primary;
+    margin-inline-end: 14px;
+
+    svg {
+      transform: rotate(180deg);
+    }
+  }
+
+  &--disabled &__control {
+    background-color: $background;
+    cursor: not-allowed;
+  }
+
+  &--disabled &__input {
+    color: $text-muted;
+    cursor: not-allowed;
+  }
+
+  // ── Dropdown menu ──────────────────────────────────────
+  &__menu {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 4px);
+    inset-inline: 0;
+    max-height: 260px;
+    overflow-y: auto;
+    margin: 0;
+    padding: $space-1;
+    list-style: none;
+    background-color: $surface;
+    border: 1px solid $border;
+    border-radius: $radius-md;
+    box-shadow: $shadow-md;
+  }
+
+  &__option {
+    padding: 8px 10px;
+    font-size: 14px;
+    color: $text-primary;
+    border-radius: $radius-sm;
+    cursor: pointer;
+
+    &--active {
+      background-color: $primary-light;
+    }
+
+    &--selected {
+      font-weight: 600;
+      color: $primary-dark;
+    }
+
+    &--clear {
+      font-style: italic;
+      color: $text-muted;
+      border-bottom: 1px solid $border;
+      border-radius: 0;
+      margin-bottom: $space-1;
+    }
+  }
+
+  &__empty {
+    padding: 10px;
+    font-size: 13px;
+    color: $text-muted;
+    text-align: center;
+  }
+}

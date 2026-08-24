@@ -21,13 +21,25 @@ function isLoggedIn() {
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { isLoading } = useAuth()
-  if (isLoading) return null
+  if (isLoading) {
+    return (
+      <div className="spinner-center">
+        <div className="spinner" />
+      </div>
+    )
+  }
   return isLoggedIn() ? children : <Navigate to="/login" replace />
 }
 
 function GuestOnly({ children }: { children: ReactNode }) {
   const { isLoading } = useAuth()
-  if (isLoading) return null
+  if (isLoading) {
+    return (
+      <div className="spinner-center">
+        <div className="spinner" />
+      </div>
+    )
+  }
   return !isLoggedIn() ? children : <Navigate to="/dashboard" replace />
 }
 

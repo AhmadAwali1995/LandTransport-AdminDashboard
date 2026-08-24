@@ -1,0 +1,287 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: $space-8;
+
+  &__hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: $radius-lg;
+    padding: $space-8 $space-6;
+    background:
+      radial-gradient(ellipse 80% 120% at 100% 0%, rgba($gridline-blue, 0.12), transparent 55%),
+      linear-gradient(135deg, $background 0%, $primary-light 48%, #f1f5f9 100%);
+    border: 1px solid $border;
+
+    @include mobile {
+      padding: $space-6 $space-5;
+    }
+  }
+
+  &__hero-copy {
+    max-width: 40rem;
+  }
+
+  &__eyebrow {
+    margin: 0 0 $space-2;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: $text-secondary;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: $text-primary;
+    line-height: 1.2;
+
+    @include mobile {
+      font-size: 22px;
+    }
+  }
+
+  &__subtitle {
+    margin: $space-2 0 0;
+    color: $text-secondary;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+  }
+
+  &__section-head {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+
+  &__section-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: $text-primary;
+  }
+
+  &__section-desc {
+    margin: 0;
+    font-size: 13px;
+    color: $text-secondary;
+  }
+
+  &__shortcuts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $space-4;
+
+    @media (max-width: 1100px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include mobile {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $space-5;
+
+    @media (max-width: 1100px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include mobile {
+      grid-template-columns: repeat(2, 1fr);
+      gap: $space-4;
+    }
+  }
+
+  &__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+  }
+}
+
+.dash-shortcut {
+  @include card;
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-5;
+  transition: box-shadow $transition, transform $transition, border-color $transition,
+    background-color $transition;
+
+  &:hover {
+    box-shadow: $shadow-md;
+    transform: translateY(-2px);
+    border-color: $primary;
+  }
+
+  &--primary {
+    background: $brand-gradient-horizontal;
+    border-color: transparent;
+    color: #fff;
+
+    .dash-shortcut__label,
+    .dash-shortcut__arrow {
+      color: #fff;
+    }
+
+    .dash-shortcut__desc {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .dash-shortcut__icon {
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+    }
+
+    &:hover {
+      border-color: transparent;
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.28);
+    }
+  }
+
+  &__icon {
+    @include flex-center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    color: $primary;
+    background-color: $primary-light;
+    border-radius: $radius-md;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__label {
+    font-size: 14px;
+    font-weight: 700;
+    color: $text-primary;
+  }
+
+  &__desc {
+    font-size: 12px;
+    color: $text-secondary;
+    line-height: 1.35;
+  }
+
+  &__arrow {
+    flex-shrink: 0;
+    color: $text-muted;
+    font-size: 16px;
+    transition: transform $transition, color $transition;
+  }
+
+  &:hover &__arrow {
+    color: $primary;
+    transform: translateX(2px);
+  }
+
+  &--primary:hover &__arrow {
+    color: #fff;
+  }
+}
+
+[dir='rtl'] .dash-shortcut:hover .dash-shortcut__arrow,
+[dir='rtl'] .stat-card:hover .stat-card__arrow {
+  transform: translateX(-2px);
+}
+
+.stat-card {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  padding: $space-6;
+  transition: box-shadow $transition, transform $transition, border-color $transition;
+
+  &:hover {
+    box-shadow: $shadow-md;
+    transform: translateY(-2px);
+    border-color: $primary;
+  }
+
+  &__top {
+    @include flex-between;
+  }
+
+  &__icon {
+    @include flex-center;
+    width: 44px;
+    height: 44px;
+    color: $primary;
+    background-color: $primary-light;
+    border-radius: $radius-md;
+  }
+
+  &__arrow {
+    color: $text-muted;
+    font-size: 18px;
+    transition: transform $transition, color $transition;
+  }
+
+  &:hover &__arrow {
+    color: $primary;
+    transform: translateX(2px);
+  }
+
+  &__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: $text-secondary;
+  }
+
+  &__value {
+    font-size: 32px;
+    font-weight: 700;
+    color: $text-primary;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__hint {
+    font-size: 12px;
+    font-weight: 600;
+    color: $primary;
+    margin-top: auto;
+  }
+}
+
+.dash-link {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  padding: 10px 14px;
+  border-radius: $radius-md;
+  border: 1px solid $border;
+  background: $surface;
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-primary;
+  transition: border-color $transition, color $transition, background-color $transition;
+
+  &:hover {
+    border-color: $primary;
+    color: $primary;
+    background: $primary-light;
+  }
+}

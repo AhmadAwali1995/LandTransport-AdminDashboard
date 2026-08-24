@@ -1,0 +1,137 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// Shared layout for all management (list) pages
+.page {
+  &__nav {
+    margin-bottom: $space-3;
+  }
+
+  &__header {
+    @include flex-between;
+    flex-wrap: wrap;
+    gap: $space-4;
+    margin-bottom: $space-6;
+  }
+
+  &__heading {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+
+  &__title {
+    font-size: 24px;
+    font-weight: 700;
+    color: $text-primary;
+  }
+
+  &__count {
+    font-size: 13px;
+    color: $text-secondary;
+  }
+
+  &__subtitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: $text-primary;
+  }
+}
+
+// Small inline badge (e.g. seat count, vacation balance)
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 999px;
+  background-color: $primary-light;
+  color: $primary-dark;
+  white-space: nowrap;
+
+  &--neutral {
+    background-color: $background;
+    color: $text-primary;
+  }
+
+  &--primary {
+    background-color: $primary-light;
+    color: $primary-dark;
+  }
+
+  &--success {
+    background-color: $success-light;
+    color: $success;
+  }
+
+  &--warning {
+    background-color: $warning-light;
+    color: $warning;
+  }
+
+  &--danger {
+    background-color: $danger-light;
+    color: $danger-dark;
+  }
+
+  &--status-predeparture {
+    background-color: #EEF2FF;
+    color: #4338CA;
+  }
+
+  &--status-intransit {
+    background-color: #ECFEFF;
+    color: #0E7490;
+  }
+
+  &--status-arrived {
+    background-color: #ECFDF5;
+    color: #047857;
+  }
+
+  &--status-arrived-late {
+    background-color: #FFF7ED;
+    color: #C2410C;
+  }
+
+  &--status-canceled {
+    background-color: #F1F5F9;
+    color: #475569;
+  }
+
+  &--spaced {
+    margin-inline-end: $space-2;
+    margin-bottom: $space-2;
+  }
+}
+
+// Muted em-dash placeholder for null cells
+.cell-empty {
+  color: $text-muted;
+}
+
+// Stack of card sections (e.g. grouped tables) with breathing room between them
+.section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+}
+
+// Header row inside a .table-wrap card (title + action), padded since .table-wrap itself has none
+.table-wrap__header {
+  @include flex-between;
+  flex-wrap: wrap;
+  gap: $space-3;
+  padding: $space-4 $space-5;
+  border-bottom: 1px solid $border;
+}
+
+// Labeled group of chip options (e.g. global vs. office titles) inside a form
+.title-picker-group {
+  margin-top: $space-4;
+
+  .page__subtitle {
+    margin-bottom: $space-2;
+  }
+}

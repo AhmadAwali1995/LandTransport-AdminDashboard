@@ -1,0 +1,443 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.table-wrap {
+  @include card;
+  overflow: visible;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow: visible;
+}
+
+.table {
+  width: 100%;
+  font-size: 14px;
+
+  thead {
+    background-color: $background;
+    border-bottom: 1px solid $border;
+  }
+
+  th {
+    text-align: start;
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: $text-secondary;
+    white-space: nowrap;
+  }
+
+  &__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    cursor: pointer;
+
+    &:hover,
+    &--active {
+      color: $text-primary;
+    }
+  }
+
+  &__sort-icon {
+    display: inline-flex;
+    opacity: 0.35;
+    flex-shrink: 0;
+
+    &--active {
+      opacity: 1;
+      color: $primary;
+    }
+  }
+
+  tbody tr {
+    background-color: $surface;
+    border-bottom: 1px solid $border;
+    transition: background-color $transition;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background-color: $primary-light;
+    }
+
+    &.table__row--refund {
+      background-color: $danger-light;
+
+      &:hover {
+        background-color: #FDE8E8;
+      }
+    }
+
+    &.table__row--arrived-ontime {
+      background-color: $success-light;
+
+      &:hover {
+        background-color: #DCFCE7;
+      }
+    }
+
+    &.table__row--arrived-late {
+      background-color: $warning-light;
+
+      &:hover {
+        background-color: #FEF3C7;
+      }
+    }
+  }
+
+  td {
+    padding: 14px 16px;
+    color: $text-primary;
+    vertical-align: middle;
+  }
+
+  &__actions {
+    text-align: end;
+    white-space: nowrap;
+    width: 1%;
+  }
+
+  &__id {
+    color: $text-muted;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  &__name {
+    white-space: nowrap;
+  }
+
+  &__route {
+    white-space: nowrap;
+  }
+
+  &__date {
+    white-space: nowrap;
+  }
+
+  &__diff {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__diff-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  &__diff-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: $text-secondary;
+  }
+
+  &__rating {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: $radius-sm;
+    background: transparent;
+    white-space: nowrap;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+
+    &:hover,
+    &:focus-visible {
+      background-color: $primary-light;
+    }
+  }
+
+  &__rating-wrap {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+
+    &:hover .table__rating-tooltip,
+    &:focus-within .table__rating-tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  &__rating-tooltip {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    min-width: 92px;
+    padding: 8px 10px;
+    border-radius: $radius-md;
+    background: $gridline-navy;
+    color: $text-on-dark;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.22);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 20;
+    transition: opacity $transition, transform $transition;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-bottom-color: $gridline-navy;
+    }
+  }
+
+  &__rating-tooltip-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    line-height: 1.35;
+  }
+
+  &__rating-tooltip-count {
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    min-width: 1.25em;
+    text-align: end;
+  }
+
+  &__rating-tooltip-stars {
+    color: #FBBF24;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+  }
+
+  &__loading-cell {
+    overflow: visible;
+    white-space: normal;
+    text-align: center;
+  }
+
+  &__loading {
+    @include flex-center;
+    flex-direction: column;
+    gap: $space-3;
+    padding: 64px 24px;
+  }
+
+  &__loading-text {
+    font-size: 14px;
+    color: $text-secondary;
+  }
+
+  // Center-aligned variant (opt-in per table).
+  &--centered {
+    th {
+      text-align: center;
+    }
+
+    td {
+      text-align: center;
+    }
+
+    .table__actions {
+      text-align: end;
+    }
+  }
+
+  &--nowrap {
+    td {
+      white-space: nowrap;
+    }
+  }
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $space-2;
+  width: 100%;
+
+  &__cta-slot {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 8.25rem;
+  }
+
+  &__cta {
+    min-width: 8.25rem;
+  }
+
+  &__icons {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+    min-width: 100px;
+  }
+}
+
+// ── Empty / error states inside table area ───────────────
+.state {
+  @include flex-center;
+  flex-direction: column;
+  gap: $space-3;
+  text-align: center;
+  padding: 64px 24px;
+
+  &__icon {
+    @include flex-center;
+    font-size: 40px;
+    opacity: 0.6;
+    color: $text-secondary;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  &__desc {
+    font-size: 14px;
+    color: $text-secondary;
+    max-width: 360px;
+  }
+}
+
+// ── Pagination ───────────────────────────────────────────
+.pagination {
+  @include flex-between;
+  flex-wrap: wrap;
+  gap: $space-3;
+  padding: 16px;
+  border-top: 1px solid $border;
+  background-color: $surface;
+
+  &__info {
+    font-size: 13px;
+    color: $text-secondary;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $space-3;
+  }
+
+  &__field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__field-label {
+    font-size: 13px;
+    color: $text-secondary;
+    white-space: nowrap;
+  }
+
+  &__select {
+    height: 30px;
+    min-width: 64px;
+    padding-block: 0;
+    padding-inline-start: 8px;
+    padding-inline-end: 28px;
+    border: 1px solid $border;
+    border-radius: 6px;
+    background-color: $surface;
+    color: $text-primary;
+    font-size: 13px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 3px rgba($primary, 0.15);
+    }
+  }
+
+  [dir='rtl'] &__select {
+    background-position: left 6px center;
+  }
+
+  &__controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $space-3;
+  }
+
+  &__page {
+    font-size: 13px;
+    color: $text-secondary;
+    min-width: 90px;
+    text-align: center;
+  }
+
+  &__pages {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__pageBtn {
+    min-width: 30px;
+    height: 30px;
+    padding: 0 6px;
+    border: 1px solid $border;
+    border-radius: 6px;
+    background-color: transparent;
+    color: $text-primary;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background-color: $primary-light;
+    }
+
+    &--active {
+      background-color: $primary;
+      border-color: $primary;
+      color: #fff;
+      cursor: default;
+    }
+  }
+
+  &__ellipsis {
+    padding: 0 4px;
+    color: $text-secondary;
+    font-size: 13px;
+  }
+}
