@@ -36,6 +36,10 @@ export interface AdminOfficeDetailsDto {
   coordinates: string | null
   cityId: number
   nationalityId: number
+  currencyId: number
+  currencyCode: string | null
+  currencyNameEn: string | null
+  currencyNameAr: string | null
   enTrademarkName: string | null
   arTrademarkName: string | null
   trademarkPath: string | null
@@ -60,6 +64,10 @@ export interface AdminOfficeInfoSectionDto {
   coordinates: string | null
   cityId: number
   nationalityId: number
+  currencyId: number | null
+  currencyCode: string | null
+  currencyNameEn: string | null
+  currencyNameAr: string | null
   enTrademarkName: string | null
   arTrademarkName: string | null
   trademarkPath: string | null

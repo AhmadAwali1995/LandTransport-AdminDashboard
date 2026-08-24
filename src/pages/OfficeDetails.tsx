@@ -89,6 +89,15 @@ function InfoTab({ info }: { info: AdminOfficeDetailsFullDto['info'] }) {
           <p className="detail-value">{dash(info.nationalityId)}</p>
         </div>
 
+        <div>
+          <p className="detail-label">Currency</p>
+          <p className="detail-value">
+            {info.currencyCode
+              ? `${info.currencyCode}${info.currencyNameEn ? ` — ${info.currencyNameEn}` : ''}`
+              : dash(info.currencyId)}
+          </p>
+        </div>
+
         <div className="detail-grid__item--full">
           <p className="detail-label">Address</p>
           <p className="detail-value">{dash(info.addressDetails)}</p>

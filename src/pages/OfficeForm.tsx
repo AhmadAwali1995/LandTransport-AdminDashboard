@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import adminOfficeService from '../services/adminOfficeService'
 import lookupService from '../services/lookupService'
 import { useToast } from '../context/ToastContext'
-import type { CityDto, CountryDto, NationalityDto } from '../types/lookup'
+import type { CityDto, CountryDto, CurrencyDto, NationalityDto } from '../types/lookup'
 
 interface OfficeFields {
   enOfficeName: string
@@ -18,6 +18,7 @@ interface OfficeFields {
   addressDetails: string
   coordinates: string
   nationalityId: string
+  currencyId: string
   enTrademarkName: string
   arTrademarkName: string
   trademarkPath: string
@@ -44,7 +45,8 @@ const emptyOffice: OfficeFields = {
   enOfficeCommercialName: '', arOfficeCommercialName: '', subdomain: '',
   officeNationalId: '', officeEmails: '', officePhoneNumbers: '',
   cityId: '', addressDetails: '', coordinates: '',
-  nationalityId: '', enTrademarkName: '', arTrademarkName: '', trademarkPath: '',
+  nationalityId: '', currencyId: '',
+  enTrademarkName: '', arTrademarkName: '', trademarkPath: '',
 }
 
 const emptyOwner: OwnerUserFields = {
@@ -79,6 +81,7 @@ export default function OfficeForm() {
   const [nationalities, setNationalities] = useState<NationalityDto[]>([])
   const [countries, setCountries] = useState<CountryDto[]>([])
   const [cities, setCities] = useState<CityDto[]>([])
+  const [currencies, setCurrencies] = useState<CurrencyDto[]>([])
   const [countryId, setCountryId] = useState('')
   const activeRef = useRef(true)
 
@@ -91,6 +94,9 @@ export default function OfficeForm() {
       .catch(() => {})
     lookupService.getCities()
       .then(res => { if (activeRef.current) setCities(res.data ?? []) })
+      .catch(() => {})
+    lookupService.currencies.getAll()
+      .then(res => { if (activeRef.current) setCurrencies(res.data ?? []) })
       .catch(() => {})
   }, [])
 
@@ -115,6 +121,7 @@ export default function OfficeForm() {
           addressDetails: d.addressDetails,
           coordinates: d.coordinates ?? '',
           nationalityId: String(d.nationalityId),
+          currencyId: d.currencyId ? String(d.currencyId) : '',
           enTrademarkName: d.enTrademarkName ?? '',
           arTrademarkName: d.arTrademarkName ?? '',
           trademarkPath: d.trademarkPath ?? '',
@@ -205,6 +212,7 @@ export default function OfficeForm() {
           addressDetails: office.addressDetails,
           coordinates: office.coordinates || null,
           nationalityId: Number(office.nationalityId),
+          currencyId: Number(office.currencyId),
           enTrademarkName: office.enTrademarkName,
           arTrademarkName: office.arTrademarkName,
           trademarkPath: office.trademarkPath || null,
@@ -241,6 +249,7 @@ export default function OfficeForm() {
             addressDetails: office.addressDetails,
             coordinates: office.coordinates || null,
             nationalityId: Number(office.nationalityId),
+            currencyId: Number(office.currencyId),
             enTrademarkName: office.enTrademarkName,
             arTrademarkName: office.arTrademarkName,
             trademarkPath: office.trademarkPath || null,
@@ -496,6 +505,23 @@ export default function OfficeForm() {
                 <option value="">Select nationality</option>
                 {nationalities.map(n => (
                   <option key={n.id} value={n.id}>{n.nationalityEnName}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Currency <span className="form-required">*</span></label>
+              <select
+                className="form-control"
+                value={office.currencyId}
+                onChange={setO('currencyId')}
+                required
+              >
+                <option value="">Select currency</option>
+                {currencies.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.code} — {c.nameEn} ({c.symbolEn})
+                  </option>
                 ))}
               </select>
             </div>
