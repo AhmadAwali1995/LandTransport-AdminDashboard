@@ -11,6 +11,7 @@ import {
   LocationsIcon,
   LookupsIcon,
   OfficesIcon,
+  TemplateIcon,
   VehicleIcon,
 } from './icons/NavIcons'
 
@@ -26,6 +27,7 @@ const NAV_GROUPS = [
       { to: '/offices', label: 'Offices', icon: OfficesIcon, end: false },
       { to: '/drivers', label: 'Drivers', icon: DriverIcon, end: false },
       { to: '/employees', label: 'Employees', icon: EmployeesIcon, end: false },
+      { to: '/vehicle-templates', label: 'Vehicle Templates', icon: TemplateIcon, end: false },
     ],
   },
   {
@@ -44,6 +46,9 @@ function titleFromPath(pathname: string) {
   const match = NAV_ITEMS.find(item =>
     item.end ? pathname === item.to : pathname.startsWith(item.to),
   )
+  if (pathname === '/vehicle-templates/new') return 'New Template'
+  if (pathname.endsWith('/edit') && pathname.startsWith('/vehicle-templates/')) return 'Edit Template'
+  if (pathname.startsWith('/vehicle-templates/') && pathname !== '/vehicle-templates') return 'Template Details'
   if (match) return match.label
   if (pathname.startsWith('/offices/new')) return 'New Office'
   if (pathname.includes('/edit')) return 'Edit Office'

@@ -71,6 +71,7 @@ const MORE_LINKS = [
   { to: '/lookups', label: 'Lookups' },
   { to: '/locations', label: 'Locations' },
   { to: '/vehicle-models', label: 'Vehicle Models' },
+  { to: '/vehicle-templates', label: 'Vehicle Templates' },
 ]
 
 type Counts = {

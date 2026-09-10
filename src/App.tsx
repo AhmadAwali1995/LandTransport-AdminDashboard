@@ -14,6 +14,9 @@ import Employees from './pages/Employees'
 import Lookups from './pages/Lookups'
 import Locations from './pages/Locations'
 import VehicleModels from './pages/VehicleModels'
+import VehicleTemplates from './pages/VehicleTemplates'
+import VehicleTemplateForm from './pages/VehicleTemplateForm'
+import VehicleTemplateDetails from './pages/VehicleTemplateDetails'
 
 function isLoggedIn() {
   return !!localStorage.getItem('authToken')
@@ -56,6 +59,10 @@ function AppRoutes() {
         <Route path="/drivers" element={<Drivers />} />
         <Route path="/drivers/:id" element={<DriverDetails />} />
         <Route path="/employees" element={<Employees />} />
+        <Route path="/vehicle-templates" element={<VehicleTemplates />} />
+        <Route path="/vehicle-templates/new" element={<VehicleTemplateForm />} />
+        <Route path="/vehicle-templates/:id/edit" element={<VehicleTemplateForm />} />
+        <Route path="/vehicle-templates/:id" element={<VehicleTemplateDetails />} />
         <Route path="/lookups/:key" element={<Lookups />} />
         <Route path="/lookups" element={<Lookups />} />
         <Route path="/locations" element={<Locations />} />

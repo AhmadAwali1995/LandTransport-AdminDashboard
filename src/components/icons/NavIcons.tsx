@@ -35,6 +35,18 @@ export function DriverIcon({ size = 18 }: { size?: number } = {}) {
   )
 }
 
+export function TemplateIcon({ size = 18 }: { size?: number } = {}) {
+  return (
+    <svg {...svgProps(size)}>
+      <rect x="3" y="4" width="5.5" height="7" rx="1.2" />
+      <rect x="15.5" y="4" width="5.5" height="7" rx="1.2" />
+      <rect x="3" y="13" width="5.5" height="7" rx="1.2" />
+      <rect x="15.5" y="13" width="5.5" height="7" rx="1.2" />
+      <path d="M12 4v16" />
+    </svg>
+  )
+}
+
 export function VehicleIcon({ size = 18 }: { size?: number } = {}) {
   return (
     <svg {...svgProps(size)}>

@@ -243,4 +243,10 @@ select.form-control {
     border-inline-start: 3px solid $success;
     color: $success;
   }
+
+  &--warning {
+    background-color: $warning-light;
+    border-inline-start: 3px solid $warning;
+    color: $warning;
+  }
 }

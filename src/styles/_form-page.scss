@@ -4,13 +4,30 @@
 .back-link {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
+  width: fit-content;
+  align-self: flex-start;
+  padding: 6px 12px 6px 10px;
   font-size: 13px;
   font-weight: 500;
+  line-height: 1.2;
   color: $text-secondary;
-  transition: color $transition;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  cursor: pointer;
+  appearance: none;
+  transition: color $transition, background-color $transition, border-color $transition;
 
   &:hover {
     color: $primary;
+    background: $primary-light;
+    border-color: #bfdbfe;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
   }
 }
 
@@ -25,6 +42,7 @@
   &__top {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     gap: $space-3;
     margin-bottom: $space-6;
   }
