@@ -3,42 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import adminOfficeService from '../services/adminOfficeService'
 import lookupService from '../services/lookupService'
 import { useToast } from '../context/ToastContext'
+import { translateApiErrors } from '../utils/apiErrors'
+import {
+  validateOfficeForm,
+  type OfficeFields,
+  type OwnerUserFields,
+} from '../utils/officeValidation'
 import type { CityDto, CountryDto, CurrencyDto, NationalityDto } from '../types/lookup'
-
-interface OfficeFields {
-  enOfficeName: string
-  arOfficeName: string
-  enOfficeCommercialName: string
-  arOfficeCommercialName: string
-  subdomain: string
-  officeNationalId: string
-  officeEmails: string
-  officePhoneNumbers: string
-  cityId: string
-  addressDetails: string
-  coordinates: string
-  nationalityId: string
-  currencyId: string
-  enTrademarkName: string
-  arTrademarkName: string
-  trademarkPath: string
-}
-
-interface OwnerUserFields {
-  firstNameEn: string
-  midNameEn: string
-  lastNameEn: string
-  firstNameAr: string
-  midNameAr: string
-  lastNameAr: string
-  email: string
-  phoneNumber: string
-  whatsappPhoneNumber: string
-  nationalId: string
-  nationalityId: string
-  birthDate: string
-  address: string
-}
 
 const emptyOffice: OfficeFields = {
   enOfficeName: '', arOfficeName: '',
@@ -50,8 +21,7 @@ const emptyOffice: OfficeFields = {
 }
 
 const emptyOwner: OwnerUserFields = {
-  firstNameEn: '', midNameEn: '', lastNameEn: '',
-  firstNameAr: '', midNameAr: '', lastNameAr: '',
+  firstName: '', midName: '', lastName: '',
   email: '', phoneNumber: '', whatsappPhoneNumber: '',
   nationalId: '', nationalityId: '', birthDate: '', address: '',
 }
@@ -63,6 +33,12 @@ interface CreateResult {
   adminPassword: string
 }
 
+type FieldErrors = Record<string, string>
+
+function controlClass(error?: string) {
+  return error ? 'form-control form-control--error' : 'form-control'
+}
+
 export default function OfficeForm() {
   const { id } = useParams<{ id?: string }>()
   const isEdit = !!id
@@ -71,6 +47,7 @@ export default function OfficeForm() {
 
   const [office, setOffice] = useState<OfficeFields>(emptyOffice)
   const [ownerUser, setOwnerUser] = useState<OwnerUserFields>(emptyOwner)
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [loading, setLoading] = useState(isEdit)
   const [submitting, setSubmitting] = useState(false)
   const [loadError, setLoadError] = useState('')
@@ -128,12 +105,9 @@ export default function OfficeForm() {
         })
         if (d.owner) {
           setOwnerUser({
-            firstNameEn: d.owner.firstNameEn,
-            midNameEn: d.owner.midNameEn ?? '',
-            lastNameEn: d.owner.lastNameEn,
-            firstNameAr: d.owner.firstNameAr,
-            midNameAr: d.owner.midNameAr ?? '',
-            lastNameAr: d.owner.lastNameAr,
+            firstName: d.owner.firstName,
+            midName: d.owner.midName ?? '',
+            lastName: d.owner.lastName,
             email: d.owner.email,
             phoneNumber: d.owner.phoneNumber ?? '',
             whatsappPhoneNumber: d.owner.whatsappPhoneNumber ?? '',
@@ -166,9 +140,15 @@ export default function OfficeForm() {
     ? cities.filter(c => String(c.countryId) === countryId)
     : []
 
+  const clearFieldError = (name: string) => {
+    setFieldErrors(prev => (prev[name] ? { ...prev, [name]: '' } : prev))
+  }
+
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setCountryId(e.target.value)
     setOffice(prev => ({ ...prev, cityId: '' }))
+    clearFieldError('countryId')
+    clearFieldError('cityId')
   }
 
   const handleResetPassword = async () => {
@@ -187,15 +167,27 @@ export default function OfficeForm() {
     }
   }
 
-  const setO = (field: keyof OfficeFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+  const setO = (field: keyof OfficeFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setOffice(prev => ({ ...prev, [field]: e.target.value }))
+    clearFieldError(field)
+  }
 
-  const setU = (field: keyof OwnerUserFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+  const setU = (field: keyof OwnerUserFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setOwnerUser(prev => ({ ...prev, [field]: e.target.value }))
+    clearFieldError(field)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitError('')
+
+    const errs = validateOfficeForm(office, ownerUser, { countryId, isEdit })
+    setFieldErrors(errs)
+    if (Object.values(errs).some(Boolean)) {
+      setSubmitError('Please fix the highlighted fields.')
+      return
+    }
+
     setSubmitting(true)
     try {
       if (isEdit) {
@@ -217,12 +209,9 @@ export default function OfficeForm() {
           arTrademarkName: office.arTrademarkName,
           trademarkPath: office.trademarkPath || null,
           owner: {
-            firstNameEn: ownerUser.firstNameEn,
-            midNameEn: ownerUser.midNameEn || null,
-            lastNameEn: ownerUser.lastNameEn,
-            firstNameAr: ownerUser.firstNameAr,
-            midNameAr: ownerUser.midNameAr || null,
-            lastNameAr: ownerUser.lastNameAr,
+            firstName: ownerUser.firstName,
+            midName: ownerUser.midName || null,
+            lastName: ownerUser.lastName,
             phoneNumber: ownerUser.phoneNumber,
             whatsappPhoneNumber: ownerUser.whatsappPhoneNumber || null,
             nationalId: ownerUser.nationalId || null,
@@ -245,7 +234,7 @@ export default function OfficeForm() {
             officeEmails: office.officeEmails,
             officePhoneNumbers: office.officePhoneNumbers,
             cityId: Number(office.cityId),
-            countryId: 1,
+            countryId: Number(countryId),
             addressDetails: office.addressDetails,
             coordinates: office.coordinates || null,
             nationalityId: Number(office.nationalityId),
@@ -255,12 +244,9 @@ export default function OfficeForm() {
             trademarkPath: office.trademarkPath || null,
           },
           adminUser: {
-            firstNameEn: ownerUser.firstNameEn,
-            midNameEn: ownerUser.midNameEn || null,
-            lastNameEn: ownerUser.lastNameEn,
-            firstNameAr: ownerUser.firstNameAr,
-            midNameAr: ownerUser.midNameAr || null,
-            lastNameAr: ownerUser.lastNameAr,
+            firstName: ownerUser.firstName,
+            midName: ownerUser.midName || null,
+            lastName: ownerUser.lastName,
             email: ownerUser.email,
             phoneNumber: ownerUser.phoneNumber,
             whatsappPhoneNumber: ownerUser.whatsappPhoneNumber || null,
@@ -275,9 +261,30 @@ export default function OfficeForm() {
         showToast('Main office created successfully.', 'success')
       }
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string; errors?: string[] } }; message?: string }
-      const msg = e?.response?.data?.errors?.[0] || e?.response?.data?.message || e?.message || 'Something went wrong.'
-      setSubmitError(msg)
+      const e = err as {
+        response?: {
+          data?: {
+            message?: string
+            title?: string
+            errors?: Record<string, string[]> | string[]
+          }
+        }
+        message?: string
+      }
+      const data = e?.response?.data
+      if (data?.errors && !Array.isArray(data.errors) && typeof data.errors === 'object') {
+        const { fieldErrors: apiFieldErrors, summary } = translateApiErrors(data.errors)
+        setFieldErrors(prev => ({ ...prev, ...apiFieldErrors }))
+        setSubmitError(summary || data.message || data.title || 'Validation failed.')
+      } else {
+        const msg =
+          (Array.isArray(data?.errors) ? data?.errors[0] : undefined)
+          || data?.message
+          || data?.title
+          || e?.message
+          || 'Something went wrong.'
+        setSubmitError(msg)
+      }
     } finally {
       setSubmitting(false)
     }
@@ -298,23 +305,22 @@ export default function OfficeForm() {
   if (loadError) {
     return (
       <div className="form-page">
-        <div className="alert alert--error">{loadError}</div>
-        <button type="button" className="btn btn--ghost" onClick={() => navigate('/offices')}>
+        <button type="button" className="back-link" onClick={() => navigate('/offices')}>
           ← Back to Offices
         </button>
+        <div className="alert alert--error">{loadError}</div>
       </div>
     )
   }
 
   return (
     <div className="form-page">
-      <div className="form-page__top">
-        <button type="button" className="back-link" onClick={() => navigate('/offices')}>
-          ← Back to Offices
-        </button>
-        <h1 className="form-page__title">
-          {isEdit ? 'Edit Office' : 'Create Office'}
-        </h1>
+      <button type="button" className="back-link" onClick={() => navigate('/offices')}>
+        ← Back to Offices
+      </button>
+
+      <div className="form-page__header">
+        <h1 className="form-page__title">{isEdit ? 'Edit Office' : 'Create Office'}</h1>
         <p className="form-page__subtitle">
           {isEdit
             ? 'Update office and owner information below.'
@@ -322,7 +328,6 @@ export default function OfficeForm() {
         </p>
       </div>
 
-      {/* Created credentials card */}
       {created && (
         <div className="success-card">
           <p className="success-card__title">✓ Office Created</p>
@@ -344,7 +349,6 @@ export default function OfficeForm() {
         </div>
       )}
 
-      {/* Password reset link card */}
       {resetLink && (
         <div className="success-card">
           <p className="success-card__title">✓ Password Reset Link Generated</p>
@@ -355,167 +359,165 @@ export default function OfficeForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <div className="form-page__card">
           {submitError && <div className="alert alert--error">{submitError}</div>}
 
           <div className="form-grid">
-            {/* ── Office Information ── */}
             <div className="form-section">Office Information</div>
 
             <div className="form-group">
               <label className="form-label">English Name <span className="form-required">*</span></label>
               <input
-                className="form-control"
+                className={controlClass(fieldErrors.enOfficeName)}
                 type="text"
                 placeholder="e.g. Al Aqaba Transport Office"
                 value={office.enOfficeName}
                 onChange={setO('enOfficeName')}
-                required
               />
+              {fieldErrors.enOfficeName && <span className="form-error-text">{fieldErrors.enOfficeName}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Arabic Name <span className="form-required">*</span></label>
               <input
-                className="form-control"
+                className={controlClass(fieldErrors.arOfficeName)}
                 type="text"
                 dir="rtl"
                 placeholder="مثال: مكتب العقبة للنقل"
                 value={office.arOfficeName}
                 onChange={setO('arOfficeName')}
-                required
               />
+              {fieldErrors.arOfficeName && <span className="form-error-text">{fieldErrors.arOfficeName}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Commercial Name (EN) <span className="form-required">*</span></label>
               <input
-                className="form-control"
+                className={controlClass(fieldErrors.enOfficeCommercialName)}
                 type="text"
                 placeholder="Commercial register name"
                 value={office.enOfficeCommercialName}
                 onChange={setO('enOfficeCommercialName')}
-                required
               />
+              {fieldErrors.enOfficeCommercialName && <span className="form-error-text">{fieldErrors.enOfficeCommercialName}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Commercial Name (AR) <span className="form-required">*</span></label>
               <input
-                className="form-control"
+                className={controlClass(fieldErrors.arOfficeCommercialName)}
                 type="text"
                 dir="rtl"
                 placeholder="الاسم التجاري"
                 value={office.arOfficeCommercialName}
                 onChange={setO('arOfficeCommercialName')}
-                required
               />
+              {fieldErrors.arOfficeCommercialName && <span className="form-error-text">{fieldErrors.arOfficeCommercialName}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Subdomain <span className="form-required">*</span></label>
               <input
-                className="form-control"
+                className={controlClass(fieldErrors.subdomain)}
                 type="text"
                 placeholder="e.g. al-aqaba-transport"
                 value={office.subdomain}
                 onChange={setO('subdomain')}
-                pattern="^[a-z0-9]+(-[a-z0-9]+)*$"
-                required
               />
-              <span className="form-hint">Lowercase letters, numbers and hyphens only</span>
+              {fieldErrors.subdomain
+                ? <span className="form-error-text">{fieldErrors.subdomain}</span>
+                : <span className="form-hint">Lowercase letters, numbers and hyphens only</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">National ID <span className="form-required">*</span></label>
               <input
-                className="form-control"
+                className={controlClass(fieldErrors.officeNationalId)}
                 type="text"
                 placeholder="e.g. 123456789012"
                 value={office.officeNationalId}
                 onChange={setO('officeNationalId')}
-                required
               />
+              {fieldErrors.officeNationalId && <span className="form-error-text">{fieldErrors.officeNationalId}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Email <span className="form-required">*</span></label>
               <input
-                className="form-control"
+                className={controlClass(fieldErrors.officeEmails)}
                 type="email"
                 placeholder="office@example.com"
                 value={office.officeEmails}
                 onChange={setO('officeEmails')}
-                required
               />
+              {fieldErrors.officeEmails && <span className="form-error-text">{fieldErrors.officeEmails}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Phone <span className="form-required">*</span></label>
               <input
-                className="form-control"
+                className={controlClass(fieldErrors.officePhoneNumbers)}
                 type="tel"
-                placeholder="+962 7x xxx xxxx"
+                placeholder="+9627xxxxxxx"
                 value={office.officePhoneNumbers}
                 onChange={setO('officePhoneNumbers')}
-                required
               />
+              {fieldErrors.officePhoneNumbers && <span className="form-error-text">{fieldErrors.officePhoneNumbers}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Country <span className="form-required">*</span></label>
               <select
-                className="form-control"
+                className={controlClass(fieldErrors.countryId)}
                 value={countryId}
                 onChange={handleCountryChange}
-                required
               >
                 <option value="">Select country</option>
                 {countries.map(c => (
                   <option key={c.id} value={c.id}>{c.enName}</option>
                 ))}
               </select>
+              {fieldErrors.countryId && <span className="form-error-text">{fieldErrors.countryId}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">City <span className="form-required">*</span></label>
               <select
-                className="form-control"
+                className={controlClass(fieldErrors.cityId)}
                 value={office.cityId}
                 onChange={setO('cityId')}
                 disabled={!countryId}
-                required
               >
                 <option value="">{countryId ? 'Select city' : 'Select a country first'}</option>
                 {citiesForCountry.map(c => (
                   <option key={c.id} value={c.id}>{c.enName}</option>
                 ))}
               </select>
+              {fieldErrors.cityId && <span className="form-error-text">{fieldErrors.cityId}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Nationality <span className="form-required">*</span></label>
               <select
-                className="form-control"
+                className={controlClass(fieldErrors.nationalityId)}
                 value={office.nationalityId}
                 onChange={setO('nationalityId')}
-                required
               >
                 <option value="">Select nationality</option>
                 {nationalities.map(n => (
                   <option key={n.id} value={n.id}>{n.nationalityEnName}</option>
                 ))}
               </select>
+              {fieldErrors.nationalityId && <span className="form-error-text">{fieldErrors.nationalityId}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Currency <span className="form-required">*</span></label>
               <select
-                className="form-control"
+                className={controlClass(fieldErrors.currencyId)}
                 value={office.currencyId}
                 onChange={setO('currencyId')}
-                required
               >
                 <option value="">Select currency</option>
                 {currencies.map(c => (
@@ -524,71 +526,73 @@ export default function OfficeForm() {
                   </option>
                 ))}
               </select>
+              {fieldErrors.currencyId && <span className="form-error-text">{fieldErrors.currencyId}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Coordinates</label>
               <input
-                className="form-control"
+                className={controlClass(fieldErrors.coordinates)}
                 type="text"
                 placeholder="e.g. 29.5265, 35.0000"
                 value={office.coordinates}
                 onChange={setO('coordinates')}
               />
-              <span className="form-hint">Optional GPS coordinates (lat, lng)</span>
+              {fieldErrors.coordinates
+                ? <span className="form-error-text">{fieldErrors.coordinates}</span>
+                : <span className="form-hint">Optional GPS coordinates (lat, lng)</span>}
             </div>
 
             <div className="form-group form-group--full">
               <label className="form-label">Address <span className="form-required">*</span></label>
               <textarea
-                className="form-control"
-                placeholder="Full address details"
+                className={controlClass(fieldErrors.addressDetails)}
+                placeholder="Full office address"
                 value={office.addressDetails}
                 onChange={setO('addressDetails')}
-                required
               />
+              {fieldErrors.addressDetails && <span className="form-error-text">{fieldErrors.addressDetails}</span>}
             </div>
 
-            {/* ── Trademark ── */}
             <div className="form-section">Trademark</div>
 
             <div className="form-group">
               <label className="form-label">Trademark Name (EN) <span className="form-required">*</span></label>
               <input
-                className="form-control"
+                className={controlClass(fieldErrors.enTrademarkName)}
                 type="text"
                 placeholder="Trademark name in English"
                 value={office.enTrademarkName}
                 onChange={setO('enTrademarkName')}
-                required
               />
+              {fieldErrors.enTrademarkName && <span className="form-error-text">{fieldErrors.enTrademarkName}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Trademark Name (AR) <span className="form-required">*</span></label>
               <input
-                className="form-control"
+                className={controlClass(fieldErrors.arTrademarkName)}
                 type="text"
                 dir="rtl"
                 placeholder="اسم العلامة التجارية"
                 value={office.arTrademarkName}
                 onChange={setO('arTrademarkName')}
-                required
               />
+              {fieldErrors.arTrademarkName && <span className="form-error-text">{fieldErrors.arTrademarkName}</span>}
             </div>
 
             <div className="form-group form-group--full">
               <label className="form-label">Trademark Image URL</label>
               <input
-                className="form-control"
+                className={controlClass(fieldErrors.trademarkPath)}
                 type="text"
                 placeholder="https://..."
                 value={office.trademarkPath}
                 onChange={setO('trademarkPath')}
               />
+              {fieldErrors.trademarkPath && <span className="form-error-text">{fieldErrors.trademarkPath}</span>}
             </div>
 
-            {/* ── Owner User Account ── */}
             <div className="form-section">
               Owner User Account
               {isEdit && (
@@ -605,162 +609,130 @@ export default function OfficeForm() {
               )}
             </div>
 
-                <div className="form-group">
-                  <label className="form-label">First Name (EN) <span className="form-required">*</span></label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    placeholder="e.g. Ahmad"
-                    value={ownerUser.firstNameEn}
-                    onChange={setU('firstNameEn')}
-                    required
-                  />
-                </div>
+            <div className="form-group">
+              <label className="form-label">First Name <span className="form-required">*</span></label>
+              <input
+                className={controlClass(fieldErrors.firstName)}
+                type="text"
+                placeholder="e.g. Ahmad"
+                value={ownerUser.firstName}
+                onChange={setU('firstName')}
+              />
+              {fieldErrors.firstName && <span className="form-error-text">{fieldErrors.firstName}</span>}
+            </div>
 
-                <div className="form-group">
-                  <label className="form-label">Middle Name (EN)</label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    placeholder="e.g. Khalid"
-                    value={ownerUser.midNameEn}
-                    onChange={setU('midNameEn')}
-                  />
-                </div>
+            <div className="form-group">
+              <label className="form-label">Middle Name</label>
+              <input
+                className={controlClass(fieldErrors.midName)}
+                type="text"
+                placeholder="e.g. Khalid"
+                value={ownerUser.midName}
+                onChange={setU('midName')}
+              />
+              {fieldErrors.midName && <span className="form-error-text">{fieldErrors.midName}</span>}
+            </div>
 
-                <div className="form-group">
-                  <label className="form-label">Last Name (EN) <span className="form-required">*</span></label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    placeholder="e.g. Al-Awali"
-                    value={ownerUser.lastNameEn}
-                    onChange={setU('lastNameEn')}
-                    required
-                  />
-                </div>
+            <div className="form-group">
+              <label className="form-label">Last Name <span className="form-required">*</span></label>
+              <input
+                className={controlClass(fieldErrors.lastName)}
+                type="text"
+                placeholder="e.g. Al-Awali"
+                value={ownerUser.lastName}
+                onChange={setU('lastName')}
+              />
+              {fieldErrors.lastName && <span className="form-error-text">{fieldErrors.lastName}</span>}
+            </div>
 
-                <div className="form-group">
-                  <label className="form-label">First Name (AR) <span className="form-required">*</span></label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    dir="rtl"
-                    placeholder="مثال: أحمد"
-                    value={ownerUser.firstNameAr}
-                    onChange={setU('firstNameAr')}
-                    required
-                  />
-                </div>
+            <div className="form-group">
+              <label className="form-label">Email <span className="form-required">*</span></label>
+              <input
+                className={controlClass(fieldErrors.email)}
+                type="email"
+                placeholder="owner@example.com"
+                value={ownerUser.email}
+                onChange={setU('email')}
+                disabled={isEdit}
+              />
+              {fieldErrors.email
+                ? <span className="form-error-text">{fieldErrors.email}</span>
+                : isEdit && <span className="form-hint">Email cannot be changed</span>}
+            </div>
 
-                <div className="form-group">
-                  <label className="form-label">Middle Name (AR)</label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    dir="rtl"
-                    placeholder="مثال: خالد"
-                    value={ownerUser.midNameAr}
-                    onChange={setU('midNameAr')}
-                  />
-                </div>
+            <div className="form-group">
+              <label className="form-label">Phone <span className="form-required">*</span></label>
+              <input
+                className={controlClass(fieldErrors.phoneNumber)}
+                type="tel"
+                placeholder="+9627xxxxxxx"
+                value={ownerUser.phoneNumber}
+                onChange={setU('phoneNumber')}
+              />
+              {fieldErrors.phoneNumber && <span className="form-error-text">{fieldErrors.phoneNumber}</span>}
+            </div>
 
-                <div className="form-group">
-                  <label className="form-label">Last Name (AR) <span className="form-required">*</span></label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    dir="rtl"
-                    placeholder="مثال: العوالي"
-                    value={ownerUser.lastNameAr}
-                    onChange={setU('lastNameAr')}
-                    required
-                  />
-                </div>
+            <div className="form-group">
+              <label className="form-label">WhatsApp Phone</label>
+              <input
+                className={controlClass(fieldErrors.whatsappPhoneNumber)}
+                type="tel"
+                placeholder="+9627xxxxxxx"
+                value={ownerUser.whatsappPhoneNumber}
+                onChange={setU('whatsappPhoneNumber')}
+              />
+              {fieldErrors.whatsappPhoneNumber
+                ? <span className="form-error-text">{fieldErrors.whatsappPhoneNumber}</span>
+                : <span className="form-hint">Leave blank to use the same phone number</span>}
+            </div>
 
-                <div className="form-group">
-                  <label className="form-label">Email <span className="form-required">*</span></label>
-                  <input
-                    className="form-control"
-                    type="email"
-                    placeholder="owner@example.com"
-                    value={ownerUser.email}
-                    onChange={setU('email')}
-                    disabled={isEdit}
-                    required
-                  />
-                  {isEdit && <span className="form-hint">Email cannot be changed</span>}
-                </div>
+            <div className="form-group">
+              <label className="form-label">National ID</label>
+              <input
+                className={controlClass(fieldErrors.nationalId)}
+                type="text"
+                placeholder="e.g. 9876543210"
+                value={ownerUser.nationalId}
+                onChange={setU('nationalId')}
+              />
+              {fieldErrors.nationalId && <span className="form-error-text">{fieldErrors.nationalId}</span>}
+            </div>
 
-                <div className="form-group">
-                  <label className="form-label">Phone <span className="form-required">*</span></label>
-                  <input
-                    className="form-control"
-                    type="tel"
-                    placeholder="+962 7x xxx xxxx"
-                    value={ownerUser.phoneNumber}
-                    onChange={setU('phoneNumber')}
-                    required
-                  />
-                </div>
+            <div className="form-group">
+              <label className="form-label">Nationality</label>
+              <select
+                className="form-control"
+                value={ownerUser.nationalityId}
+                onChange={setU('nationalityId')}
+              >
+                <option value="">Inherit from office</option>
+                {nationalities.map(n => (
+                  <option key={n.id} value={n.id}>{n.nationalityEnName}</option>
+                ))}
+              </select>
+              <span className="form-hint">Leave blank to inherit from office</span>
+            </div>
 
-                <div className="form-group">
-                  <label className="form-label">WhatsApp Phone</label>
-                  <input
-                    className="form-control"
-                    type="tel"
-                    placeholder="+962 7x xxx xxxx"
-                    value={ownerUser.whatsappPhoneNumber}
-                    onChange={setU('whatsappPhoneNumber')}
-                  />
-                  <span className="form-hint">Leave blank to use the same phone number</span>
-                </div>
+            <div className="form-group">
+              <label className="form-label">Birth Date</label>
+              <input
+                className="form-control"
+                type="date"
+                value={ownerUser.birthDate}
+                onChange={setU('birthDate')}
+              />
+            </div>
 
-                <div className="form-group">
-                  <label className="form-label">National ID</label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    placeholder="e.g. 9876543210"
-                    value={ownerUser.nationalId}
-                    onChange={setU('nationalId')}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Nationality</label>
-                  <select
-                    className="form-control"
-                    value={ownerUser.nationalityId}
-                    onChange={setU('nationalityId')}
-                  >
-                    <option value="">Select office</option>
-                    {nationalities.map(n => (
-                      <option key={n.id} value={n.id}>{n.nationalityEnName}</option>
-                    ))}
-                  </select>
-                  <span className="form-hint">Leave blank to inherit from office</span>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Birth Date</label>
-                  <input
-                    className="form-control"
-                    type="date"
-                    value={ownerUser.birthDate}
-                    onChange={setU('birthDate')}
-                  />
-                </div>
-
-                <div className="form-group form-group--full">
-                  <label className="form-label">Address</label>
-                  <textarea
-                    className="form-control"
-                    placeholder="Owner's home address"
-                    value={ownerUser.address}
-                    onChange={setU('address')}
-                  />
-                </div>
+            <div className="form-group form-group--full">
+              <label className="form-label">Address</label>
+              <textarea
+                className={controlClass(fieldErrors.address)}
+                placeholder="Owner's home address"
+                value={ownerUser.address}
+                onChange={setU('address')}
+              />
+              {fieldErrors.address && <span className="form-error-text">{fieldErrors.address}</span>}
+            </div>
           </div>
 
           <div className="form-page__actions">

@@ -7,12 +7,9 @@ export interface OfficeOwnerDto {
 
 export interface AdminOfficeOwnerDetailsDto {
   id: string
-  firstNameEn: string
-  midNameEn: string | null
-  lastNameEn: string
-  firstNameAr: string
-  midNameAr: string | null
-  lastNameAr: string
+  firstName: string
+  midName: string | null
+  lastName: string
   email: string
   phoneNumber: string | null
   whatsappPhoneNumber: string | null
